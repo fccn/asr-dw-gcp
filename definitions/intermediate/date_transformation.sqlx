@@ -1,0 +1,15 @@
+config {
+  type: "table",
+  name: "staging_date",
+  description: "A table containing unique dates with transformed components."
+}
+
+SELECT DISTINCT
+  full_date,
+  EXTRACT(DAY FROM full_date) AS day,
+  EXTRACT(MONTH FROM full_date) AS month,
+  EXTRACT(YEAR FROM full_date) AS year,
+  EXTRACT(QUARTER FROM full_date) AS quarter,
+  EXTRACT(WEEK FROM full_date) AS week,
+  FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date), 'pt_PT') AS weekday
+FROM ${ref("filtered")}

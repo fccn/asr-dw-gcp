@@ -1,0 +1,25 @@
+config {
+  type: "view",
+  description: "A view with transformed TIMESTAMP to DATE and filtered rows where auth_status and domain are not empty.",
+  columns: columns.eduroam_filtered_columns,
+  name: "filtered"
+}
+
+SELECT
+  DATE(timestamp) AS full_date,
+  auth_status,
+  user_hash,
+  domain,
+  radius,
+  nas,
+  radius_country,
+  radius_region,
+  nas_country,
+  nas_region
+FROM
+  ${"eduroam"}
+WHERE
+  auth_status IS NOT NULL
+  AND auth_status != ""
+  AND domain IS NOT NULL
+  AND domain != ""
