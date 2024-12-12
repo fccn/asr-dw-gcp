@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "data_warehouse",
+  name: "fact_distinct_user_hit",
+  description: "Declaration for fact_distinct_user_hit table in the data warehouse."
+}

@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "data_warehouse",
+  name: "fact_data_metric",
+  description: "Declaration for fact_data_metric table in the data warehouse."
+}

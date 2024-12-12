@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "data_warehouse",
+  name: "dim_radius",
+  description: "Declaration for dim_radius table in the data warehouse."
+}

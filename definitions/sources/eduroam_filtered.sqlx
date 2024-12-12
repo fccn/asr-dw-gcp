@@ -17,7 +17,7 @@ SELECT
   nas_country,
   nas_region
 FROM
-  ${"eduroam"}
+  ${ref("eduroam")}
 WHERE
   auth_status IS NOT NULL
   AND auth_status != ""

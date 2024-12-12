@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "data_warehouse",
+  name: "dim_service",
+  description: "Declaration for dim_service table in the data warehouse."
+}

@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "data_warehouse",
+  name: "dim_nas",
+  description: "Declaration for dim_nas table in the data warehouse."
+}
