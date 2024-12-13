@@ -1,0 +1,54 @@
+config {
+  type: "view",
+  name: "transformed_institution",
+  description: "A view containing unique institutions with transformed components."
+}
+
+WITH staging_institutions AS (
+  -- Step 1: Get distinct domains, auth_status and associated columns
+  SELECT
+    domain,
+    auth_status
+  FROM
+    ${ref("source_filtered")}
+  GROUP BY
+    domain, auth_status
+),
+institution_with_id AS (
+  -- Step 2: Join with the reference table to get existing IDs
+  SELECT
+    staging.domain,
+    staging.auth_status,
+    dw.institution_id
+  FROM
+    staging_institutions staging
+  LEFT JOIN
+    ${ref("dim_institution")} dw
+  ON
+    staging.domain = dw.domain
+),
+incremental_ids AS (
+  -- Step 3: Generate incremental IDs for new domain entries
+  SELECT
+    domain,
+    auth_status,
+    COALESCE(
+      institution_id,
+      CASE 
+        WHEN auth_status = 'OK' THEN
+          ROW_NUMBER() OVER (ORDER BY domain) + COALESCE((
+            SELECT MAX(institution_id) FROM ${ref("dim_institution")} -- Get the max ID from the reference table
+          ), 0) -- Default MAX(nas_id) to 0 if the reference table is empty
+        ELSE NULL
+      END
+    ) AS institution_id
+  FROM
+    institution_with_id
+)
+-- Step 4: Output the final result
+SELECT
+  institution_id,
+  domain,
+  auth_status
+FROM
+  incremental_ids

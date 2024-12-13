@@ -1,0 +1,19 @@
+config {
+    type: "view",
+    name: "selected_metrics",
+    description: "A view containing the selected metrics for the project."
+}
+
+SELECT
+  metric_id,
+  name,
+  units
+FROM
+  ${ref("dim_metric")}
+WHERE
+  name IN ('${metrics.TOTAL_HITS}',
+    '${metrics.TOTAL_OK_HITS}',
+    '${metrics.TOTAL_FAIL_HITS}',
+    '${metrics.DISTINCT_HITS}',
+    '${metrics.DISTINCT_OK_HITS}',
+    '${metrics.DISTINCT_FAIL_HITS}')

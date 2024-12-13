@@ -1,0 +1,54 @@
+config {
+  type: "view",
+  name: "transformed_data_metric",
+  description: "A view containing the daily data metric with transformed components."
+}
+
+
+WITH distinct_data AS (
+  SELECT DISTINCT
+    full_date,
+    institution_id,
+    radius_id,
+    nas_id
+  FROM
+    ${ref("transformed_filtered_source")}
+),
+data_with_service_id as (
+  SELECT
+    full_date,
+    svc.service_id as service_id,
+    institution_id,
+    radius_id,
+    nas_id
+  FROM
+    distinct_data
+  LEFT JOIN
+    ${ref("dim_service")} svc ON svc.name = "eduroam"
+),
+data_with_metrics as (
+  SELECT
+    full_date,
+    service_id,
+    institution_id,
+    radius_id,
+    nas_id,
+    metric.metric_id,                       -- Add the metric_id from a constant table
+    CAST(0.0 AS FLOAT64) AS value          -- Default value for the "value" column
+  FROM
+    data_with_service_id
+  CROSS JOIN
+    ${ref("selected_metrics")} metric
+)
+
+SELECT
+  full_date,
+  service_id,
+  institution_id,
+  radius_id,
+  nas_id,
+  metric_id,
+  value
+FROM 
+  data_with_metrics
+  

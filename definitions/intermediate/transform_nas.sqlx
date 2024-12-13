@@ -1,0 +1,54 @@
+config {
+  type: "view",
+  name: "transformed_nas",
+  description: "A view containing unique NAS with transformed components."
+}
+
+WITH distinct_nas AS (
+  -- Step 1: Get distinct NAS and associated columns
+  SELECT
+    nas,
+    ANY_VALUE(nas_country) AS nas_country,
+    ANY_VALUE(nas_region) AS nas_region
+  FROM
+    ${ref("source_filtered")} -- Replace with your source table
+  GROUP BY
+    nas
+),
+nas_with_id AS (
+  -- Step 2: Join with the reference table to get existing IDs
+  SELECT
+    dn.nas,
+    dn.nas_country,
+    dn.nas_region,
+    nr.nas_id
+  FROM
+    distinct_nas dn
+  LEFT JOIN
+    ${ref("dim_nas")} nr -- Replace with your reference table
+  ON
+    dn.nas = nr.nas
+),
+incremental_ids AS (
+  -- Step 3: Generate incremental IDs for new NAS entries
+  SELECT
+    nas,
+    nas_country,
+    nas_region,
+    COALESCE(
+      nas_id,
+      ROW_NUMBER() OVER (ORDER BY nas) + COALESCE((
+        SELECT MAX(nas_id) FROM ${ref("dim_nas")} -- Get the max ID from the reference table
+      ), 0) -- Default MAX(nas_id) to 0 if the reference table is empty
+    ) AS nas_id
+  FROM
+    nas_with_id
+)
+-- Step 4: Output the final result
+SELECT
+  nas_id,
+  nas,
+  nas_country as country,
+  nas_region as region
+FROM
+  incremental_ids

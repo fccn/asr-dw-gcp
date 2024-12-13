@@ -2,7 +2,7 @@ config {
   type: "view",
   description: "A view with transformed TIMESTAMP to DATE and filtered rows where auth_status and domain are not empty.",
   columns: columns.eduroam_filtered_columns,
-  name: "filtered"
+  name: "source_filtered"
 }
 
 SELECT

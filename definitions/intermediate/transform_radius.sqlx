@@ -1,0 +1,54 @@
+config {
+  type: "view",
+  name: "transformed_radius",
+  description: "A view containing unique radius with transformed components."
+}
+
+WITH distinct_radius AS (
+  -- Step 1: Get distinct radius and associated columns
+  SELECT
+    radius,
+    ANY_VALUE(radius_country) AS country,
+    ANY_VALUE(radius_region) AS region
+  FROM
+    ${ref("source_filtered")}
+  GROUP BY
+    radius
+),
+radius_with_id AS (
+  -- Step 2: Join with the reference table to get existing IDs
+  SELECT
+    staging.radius,
+    staging.country,
+    staging.region,
+    dw.radius_id
+  FROM
+    distinct_radius staging
+  LEFT JOIN
+    ${ref("dim_radius")} dw
+  ON
+    staging.radius = dw.radius
+),
+incremental_ids AS (
+  -- Step 3: Generate incremental IDs for new radius entries
+  SELECT
+    radius,
+    country,
+    region,
+    COALESCE(
+      radius_id,
+      ROW_NUMBER() OVER (ORDER BY radius) + COALESCE((
+        SELECT MAX(radius_id) FROM ${ref("dim_radius")} -- Get the max ID from the reference table
+      ), 0) -- Default MAX(radius_id) to 0 if the reference table is empty
+    ) AS radius_id
+  FROM
+    radius_with_id
+)
+-- Step 4: Output the final result
+SELECT
+  radius_id,
+  radius,
+  country,
+  region
+FROM
+  incremental_ids

@@ -64,7 +64,7 @@ const eduroam_filtered_columns = {
     radius_region: radius_columns.region,
     nas_country: nas_columns.country,
     nas_region: nas_columns.region,
-  }
+}
 
 module.exports = {
     date_columns,

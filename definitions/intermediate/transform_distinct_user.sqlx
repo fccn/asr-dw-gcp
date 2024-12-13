@@ -1,0 +1,15 @@
+config {
+  type: "view",
+  name: "transformed_distinct_user_hit",
+  description: "A view containing distinct user hits with transformed components."
+}
+
+SELECT DISTINCT
+  full_date,
+  institution_id,
+  radius_id,
+  nas_id,
+  user_hash,
+  auth_status
+FROM
+  ${ref("transformed_filtered_source")}

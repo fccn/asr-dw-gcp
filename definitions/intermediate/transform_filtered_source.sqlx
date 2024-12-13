@@ -1,0 +1,37 @@
+config {
+  type: "view",
+  name: "transformed_filtered_source",
+  description: "A view containing the filtered source data with transformed components."
+}
+
+WITH transformed_source AS (
+  SELECT
+    src.full_date,
+    src.domain,
+    src.radius,
+    src.nas,
+    src.user_hash,
+    src.auth_status,
+    institution.institution_id AS transformed_domain,
+    radius.radius_id AS transformed_radius,
+    nas.nas_id AS transformed_nas
+  FROM
+    ${ref("source_filtered")} src
+  LEFT JOIN
+    ${ref("transformed_institution")} institution ON src.domain = institution.domain AND src.auth_status = institution.auth_status
+  LEFT JOIN
+    ${ref("transformed_radius")} radius ON src.radius = radius.radius
+  LEFT JOIN
+    ${ref("transformed_nas")} nas ON src.nas = nas.nas
+)
+
+
+SELECT
+  full_date,
+  transformed_domain AS institution_id,
+  transformed_radius AS radius_id,
+  transformed_nas AS nas_id,
+  user_hash,
+  auth_status
+FROM
+  transformed_source

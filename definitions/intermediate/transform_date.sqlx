@@ -1,7 +1,7 @@
 config {
-  type: "table",
-  name: "staging_date",
-  description: "A table containing unique dates with transformed components."
+  type: "view",
+  name: "transformed_date",
+  description: "A view containing unique dates with transformed components."
 }
 
 SELECT DISTINCT
@@ -11,5 +11,5 @@ SELECT DISTINCT
   EXTRACT(YEAR FROM full_date) AS year,
   EXTRACT(QUARTER FROM full_date) AS quarter,
   EXTRACT(WEEK FROM full_date) AS week,
-  FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date), 'pt_PT') AS weekday
-FROM ${ref("filtered")}
+  FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date)) AS weekday
+FROM ${ref("source_filtered")}
