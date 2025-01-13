@@ -11,7 +11,7 @@ WITH distinct_nas AS (
     ANY_VALUE(nas_country) AS nas_country,
     ANY_VALUE(nas_region) AS nas_region
   FROM
-    ${ref("source_filtered")} -- Replace with your source table
+    ${ref("filtered_source")} -- Replace with your source table
   GROUP BY
     nas
 ),

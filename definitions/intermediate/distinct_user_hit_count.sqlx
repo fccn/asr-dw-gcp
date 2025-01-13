@@ -1,0 +1,21 @@
+config {
+  type: "view",
+  name: "distinct_user_hit_count",
+  description: "A view that counts the number of distinct user for each combination of full_date, institution_id, radius_id, and nas_id."
+}
+
+SELECT
+  full_date,
+  institution_id,
+  radius_id,
+  nas_id,
+  COUNT(CASE WHEN auth_status = '${auth_status.SUCCESSFUL_HIT}' THEN 1 END) AS auth_ok_count,
+  COUNT(CASE WHEN auth_status = '${auth_status.FAILED_HIT}' THEN 1 END) AS auth_fail_count,
+  COUNT(DISTINCT user_hash) AS auth_total_count
+FROM
+  ${ref("distinct_user_hit")}
+GROUP BY
+  full_date,
+  institution_id,
+  radius_id,
+  nas_id

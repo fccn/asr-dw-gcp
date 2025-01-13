@@ -1,0 +1,35 @@
+config {
+  type: "view",
+  materialized: true,
+  name: "user_hit_count",
+  description: "A view that counts the number of auth_status occurrences for each combination of full_date, institution_id, radius_id, and nas_id.",
+}
+
+WITH aggregated_data AS (
+  SELECT
+    full_date,
+    institution_id,
+    radius_id,
+    nas_id,
+    COUNT(CASE WHEN auth_status = '${auth_status.SUCCESSFUL_HIT}' THEN 1 END) AS auth_ok_count,
+    COUNT(CASE WHEN auth_status = '${auth_status.FAILED_HIT}' THEN 1 END) AS auth_fail_count,
+    COUNT(*) AS auth_total_count
+  FROM
+    ${ref("filtered_source_with_id")}
+  GROUP BY
+    full_date,
+    institution_id,
+    radius_id,
+    nas_id
+)
+
+SELECT
+  full_date,
+  institution_id,
+  radius_id,
+  nas_id,
+  auth_ok_count,
+  auth_fail_count,
+  auth_total_count
+FROM
+  aggregated_data

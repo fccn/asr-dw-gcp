@@ -1,0 +1,66 @@
+config {
+  type: "table",
+  name: "updated_data_metrics",
+  description: "A table containing altered values based on selected metrics and distinct user counts.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["metric_id"]
+  }
+}
+
+WITH metric_values AS (
+  SELECT
+    dm.full_date,
+    dm.service_id,
+    dm.institution_id,
+    dm.radius_id,
+    dm.nas_id,
+    dm.metric_id,    
+    CASE 
+      WHEN sm.name = '${metrics.TOTAL_HITS}' THEN uhc.auth_total_count
+      WHEN sm.name = '${metrics.TOTAL_OK_HITS}' THEN uhc.auth_ok_count
+      WHEN sm.name = '${metrics.TOTAL_FAIL_HITS}' THEN uhc.auth_fail_count
+      WHEN sm.name = '${metrics.DISTINCT_HITS}' THEN duhc.auth_total_count
+      WHEN sm.name = '${metrics.DISTINCT_OK_HITS}' THEN duhc.auth_ok_count
+      WHEN sm.name = '${metrics.DISTINCT_FAIL_HITS}' THEN duhc.auth_fail_count
+    END AS value,
+    uhc.auth_total_count as total_hits,
+    uhc.auth_ok_count as total_ok_hits,
+    uhc.auth_fail_count as total_fail_hits,
+    duhc.auth_total_count as distinct_hits,
+    duhc.auth_ok_count as distinct_ok_hits,
+    duhc.auth_fail_count as distinct_fail_hits
+  FROM
+    ${ref("data_metrics")} dm
+  JOIN
+    ${ref("selected_metrics")} sm
+  ON
+    dm.metric_id = sm.metric_id
+  JOIN
+    ${ref("distinct_user_hit_count")} duhc
+  ON
+    dm.full_date = duhc.full_date
+    AND (dm.institution_id = duhc.institution_id OR (dm.institution_id IS NULL AND duhc.institution_id IS NULL))
+    AND dm.radius_id = duhc.radius_id
+    AND dm.nas_id = duhc.nas_id
+  JOIN
+    ${ref("user_hit_count")} uhc
+  ON
+    dm.full_date = uhc.full_date
+    AND (dm.institution_id = uhc.institution_id OR (dm.institution_id IS NULL AND uhc.institution_id IS NULL)) 
+    AND dm.radius_id = uhc.radius_id
+    AND dm.nas_id = uhc.nas_id
+)
+
+SELECT
+  full_date,
+  service_id,
+  institution_id,
+  radius_id,
+  nas_id,
+  metric_id,
+  value
+FROM
+  metric_values
+
+

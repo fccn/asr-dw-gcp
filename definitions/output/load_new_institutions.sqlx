@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+}
+
+MERGE INTO
+  ${ref("dim_institution")} AS TARGET
+USING (
+  SELECT *
+  FROM ${ref("transformed_institution")}
+  WHERE institution_id IS NOT NULL
+) AS source
+ON
+  target.domain = source.domain
+WHEN NOT MATCHED THEN
+    INSERT (institution_id, domain)
+VALUES
+  (source.institution_id, source.domain)

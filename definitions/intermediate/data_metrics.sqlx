@@ -1,7 +1,11 @@
 config {
-  type: "view",
-  name: "transformed_data_metric",
-  description: "A view containing the daily data metric with transformed components."
+  type: "table",
+  name: "data_metrics",
+  description: "A view containing the daily data metric with transformed components.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["metric_id"]
+  }
 }
 
 
@@ -12,7 +16,7 @@ WITH distinct_data AS (
     radius_id,
     nas_id
   FROM
-    ${ref("transformed_filtered_source")}
+    ${ref("filtered_source_with_id")}
 ),
 data_with_service_id as (
   SELECT

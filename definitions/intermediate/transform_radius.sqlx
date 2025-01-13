@@ -11,7 +11,7 @@ WITH distinct_radius AS (
     ANY_VALUE(radius_country) AS country,
     ANY_VALUE(radius_region) AS region
   FROM
-    ${ref("source_filtered")}
+    ${ref("filtered_source")}
   GROUP BY
     radius
 ),

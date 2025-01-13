@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+}
+
+MERGE INTO
+  ${ref("dim_radius")} AS TARGET
+USING (
+  SELECT *
+  FROM ${ref("transformed_radius")}
+  WHERE radius_id IS NOT NULL
+) AS source
+ON
+  target.radius = source.radius 
+WHEN NOT MATCHED THEN
+    INSERT (radius_id, radius, country, region)
+VALUES
+  (source.radius_id, source.radius, source.country, source.region)

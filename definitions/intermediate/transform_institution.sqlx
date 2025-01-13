@@ -10,7 +10,7 @@ WITH staging_institutions AS (
     domain,
     auth_status
   FROM
-    ${ref("source_filtered")}
+    ${ref("filtered_source")}
   GROUP BY
     domain, auth_status
 ),

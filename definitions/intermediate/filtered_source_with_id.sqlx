@@ -1,7 +1,11 @@
 config {
-  type: "view",
-  name: "transformed_filtered_source",
-  description: "A view containing the filtered source data with transformed components."
+  type: "table",
+  name: "filtered_source_with_id",
+  description: "A table containing the filtered source data with transformed components.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["auth_status", "institution_id", "radius_id", "nas_id"]
+  }
 }
 
 WITH transformed_source AS (
@@ -16,7 +20,7 @@ WITH transformed_source AS (
     radius.radius_id AS transformed_radius,
     nas.nas_id AS transformed_nas
   FROM
-    ${ref("source_filtered")} src
+    ${ref("filtered_source")} src
   LEFT JOIN
     ${ref("transformed_institution")} institution ON src.domain = institution.domain AND src.auth_status = institution.auth_status
   LEFT JOIN

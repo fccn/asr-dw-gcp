@@ -1,0 +1,13 @@
+config {
+  type: "incremental",
+}
+
+MERGE INTO
+  ${ref("dim_date")} AS target
+USING
+  ${ref("transformed_date")} AS source
+ON
+  target.full_date = source.full_date
+WHEN NOT MATCHED THEN
+  INSERT (full_date, day, month, year, quarter, week, weekday)
+  VALUES (source.full_date, source.day, source.month, source.year, source.quarter, source.week, source.weekday)

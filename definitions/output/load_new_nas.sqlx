@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+}
+
+MERGE INTO
+  ${ref("dim_nas")} AS TARGET
+USING (
+  SELECT *
+  FROM ${ref("transformed_nas")}
+  WHERE nas_id IS NOT NULL
+) AS source
+ON
+  target.nas = source.nas 
+WHEN NOT MATCHED THEN
+    INSERT (nas_id, nas, country, region)
+VALUES
+  (source.nas_id, source.nas, source.country, source.region)

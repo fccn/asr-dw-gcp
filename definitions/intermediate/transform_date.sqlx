@@ -12,4 +12,4 @@ SELECT DISTINCT
   EXTRACT(QUARTER FROM full_date) AS quarter,
   EXTRACT(WEEK FROM full_date) AS week,
   FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date)) AS weekday
-FROM ${ref("source_filtered")}
+FROM ${ref("filtered_source")}
