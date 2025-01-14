@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "staging",
+  name: "elasticsearch_eduroam_logs",
+  description: "Declaration for elasticsearch eduroam logs staging table."
+}

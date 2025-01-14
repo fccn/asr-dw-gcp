@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "staging",
+  name: "webhook_eduroam_institutions",
+  description: "Declaration for webhook eduroam institutions staging table."
+}

@@ -18,7 +18,5 @@ SELECT
 FROM
   ${ref("eduroam")}
 WHERE
-  auth_status IS NOT NULL
   AND auth_status != ""
-  AND domain IS NOT NULL
   AND domain != ""

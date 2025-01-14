@@ -1,7 +1,0 @@
-config {
-  type: "declaration",
-  database: "datawarehouseasr",
-  schema: "staging",
-  name: "eduroam",
-  description: "Declaration for eduroam staging table."
-}
