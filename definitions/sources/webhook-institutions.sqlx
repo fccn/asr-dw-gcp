@@ -1,0 +1,19 @@
+config {
+    type: "view",
+    name: "webhook-institutions",
+    description: "A view containing the institutions extracted from webhook."
+}
+
+
+query: |
+    WITH deduplicated AS (
+        SELECT DISTINCT
+            SPLIT_PART(CI1_codename, ':', -1) AS CI1_codename,
+            CI1_descricao,
+            CI1_org,
+            CI1_status,
+            Radius_Realm
+        FROM ${ref("webhook_eduroam_institutions")}
+    )
+    SELECT *
+    FROM deduplicated
