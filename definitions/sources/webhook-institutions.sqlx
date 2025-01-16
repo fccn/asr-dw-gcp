@@ -5,15 +5,14 @@ config {
 }
 
 
-query: |
-    WITH deduplicated AS (
-        SELECT DISTINCT
-            SPLIT_PART(CI1_codename, ':', -1) AS CI1_codename,
-            CI1_descricao,
-            CI1_org,
-            CI1_status,
-            Radius_Realm
-        FROM ${ref("webhook_eduroam_institutions")}
-    )
-    SELECT *
-    FROM deduplicated
+WITH deduplicated AS (
+    SELECT DISTINCT
+        SPLIT(CI1_codename, ':')[OFFSET(ARRAY_LENGTH(SPLIT(CI1_codename, ':')) - 1)] AS codename,
+        CI1_descricao AS description,
+        CI1_org AS org,
+        CI1_status AS status,
+        Radius_Realms as realm
+    FROM ${ref("webhook_eduroam_institutions")}
+)
+SELECT *
+FROM deduplicated
