@@ -1,10 +1,10 @@
 config {
   type: "table",
-  name: "data_metrics",
+  name: "data-metrics",
   description: "A view containing the daily data metric with transformed components.",
   bigquery: {
     partitionBy: "full_date",
-    clusterBy: ["metric_id"]
+    clusterBy: ["metric-id"]
   }
 }
 
@@ -16,7 +16,7 @@ WITH distinct_data AS (
     radius_id,
     nas_id
   FROM
-    ${ref("filtered_source_with_id")}
+    ${ref("filtered-source-with-id")}
 ),
 data_with_service_id as (
   SELECT
@@ -42,7 +42,7 @@ data_with_metrics as (
   FROM
     data_with_service_id
   CROSS JOIN
-    ${ref("selected_metrics")} metric
+    ${ref("selected-metrics")} metric
 )
 
 SELECT

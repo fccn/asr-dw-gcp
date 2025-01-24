@@ -1,11 +1,9 @@
-config {
-  type: "incremental",
-}
+config { type: "operations" }
 
 MERGE INTO
   ${ref("dim_date")} AS target
 USING
-  ${ref("transformed_date")} AS source
+  ${ref("transformed-date")} AS source
 ON
   target.full_date = source.full_date
 WHEN NOT MATCHED THEN

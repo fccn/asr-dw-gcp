@@ -1,12 +1,10 @@
-config {
-  type: "incremental",
-}
+config { type: "operations" }
 
 MERGE INTO
   ${ref("dim_nas")} AS TARGET
 USING (
   SELECT *
-  FROM ${ref("transformed_nas")}
+  FROM ${ref("transformed-nas")}
   WHERE nas_id IS NOT NULL
 ) AS source
 ON

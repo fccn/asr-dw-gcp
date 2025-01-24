@@ -1,17 +1,15 @@
-config {
-  type: "incremental",
-}
+config { type: "operations" }
 
 MERGE INTO
   ${ref("dim_institution")} AS TARGET
 USING (
   SELECT *
-  FROM ${ref("transformed_institution")}
+  FROM ${ref("transformed-institution")}
   WHERE institution_id IS NOT NULL
 ) AS source
 ON
-  target.domain = source.domain
+  target.realm = source.domain
 WHEN NOT MATCHED THEN
-    INSERT (institution_id, domain)
+    INSERT (institution_id, realm)
 VALUES
   (source.institution_id, source.domain)

@@ -1,0 +1,23 @@
+config { type: "operations" }
+
+MERGE INTO
+  ${ref("dim_institution")} AS TARGET
+USING (
+  SELECT *
+  FROM ${ref("update-institutions-from-webhook")}
+) AS source
+ON
+  target.institution_id = source.institution_id 
+WHEN MATCHED AND (
+  target.codename != source.codename OR
+  target.description != source.description OR
+  target.member != source.member
+) THEN
+    UPDATE SET
+      target.codename = source.codename,
+      target.description = source.description,
+      target.member = source.member
+WHEN NOT MATCHED THEN
+    INSERT (institution_id, codename, description, realm, member)
+VALUES
+  (source.institution_id, source.codename, source.description, source.realm, source.member)

@@ -1,0 +1,46 @@
+config {
+  type: "incremental"
+}
+
+-- Get the current largest institution_id
+WITH max_id AS (
+    SELECT COALESCE(MAX(institution_id), 0) AS max_id
+    FROM ${ref("dim_institution")}
+),
+
+-- Prepare the new or updated data
+upsert_data AS (
+    SELECT
+        whi.*,
+        COALESCE(dim.institution_id, max_id.max_id + ROW_NUMBER() OVER (ORDER BY whi.realm)) AS institution_id
+    FROM
+        ${ref("webhook-institutions")} AS whi
+    LEFT JOIN
+        ${ref("dim_institution")} AS dim
+    ON
+        whi.realm = dim.realm
+    CROSS JOIN
+        max_id
+),
+
+-- Filter to include only rows that have changed or are new
+filtered_data AS (
+    SELECT
+        upsert_data.institution_id,
+        upsert_data.realm,
+        upsert_data.codename,
+        upsert_data.description,
+        upsert_data.member
+    FROM upsert_data
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM ${ref("dim_institution")} AS dim
+        WHERE dim.realm = upsert_data.realm
+          AND dim.codename = upsert_data.codename
+          AND dim.description = upsert_data.description
+          AND dim.member = upsert_data.member
+    )
+)
+
+-- Insert the new or updated data into the target table
+SELECT * FROM filtered_data

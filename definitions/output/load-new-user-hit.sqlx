@@ -1,0 +1,10 @@
+config { type: "operations" }
+
+INSERT INTO
+  ${ref("fact_distinct_user_hit")}
+SELECT
+  *
+FROM
+  ${ref("distinct-user-hit")}
+WHERE
+  TRUE

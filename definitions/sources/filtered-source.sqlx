@@ -1,7 +1,7 @@
 config {
   type: "view",
   materialized: true,
-  name: "filtered_source"
+  name: "filtered-source"
 }
 
 SELECT

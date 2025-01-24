@@ -1,7 +1,8 @@
 config {
   type: "view",
-  name: "transformed_institution",
-  description: "A view containing unique institutions with transformed components."
+  name: "transformed-institution",
+  description: "A view containing unique institutions with transformed components.",
+  dependencies: ["load-webhook-info"]
 }
 
 WITH staging_institutions AS (
@@ -10,7 +11,7 @@ WITH staging_institutions AS (
     domain,
     auth_status
   FROM
-    ${ref("filtered_source")}
+    ${ref("filtered-source")}
   GROUP BY
     domain, auth_status
 ),
@@ -25,7 +26,7 @@ institution_with_id AS (
   LEFT JOIN
     ${ref("dim_institution")} dw
   ON
-    staging.domain = dw.domain
+    staging.domain = dw.realm
 ),
 incremental_ids AS (
   -- Step 3: Generate incremental IDs for new domain entries

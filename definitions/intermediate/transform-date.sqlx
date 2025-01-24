@@ -1,6 +1,6 @@
 config {
   type: "view",
-  name: "transformed_date",
+  name: "transformed-date",
   description: "A view containing unique dates with transformed components."
 }
 
@@ -12,4 +12,4 @@ SELECT DISTINCT
   EXTRACT(QUARTER FROM full_date) AS quarter,
   EXTRACT(WEEK FROM full_date) AS week,
   FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date)) AS weekday
-FROM ${ref("filtered_source")}
+FROM ${ref("filtered-source")}

@@ -1,6 +1,6 @@
 config {
     type: "view",
-    name: "selected_metrics",
+    name: "selected-metrics",
     description: "A view containing the selected metrics for the project."
 }
 

@@ -1,6 +1,6 @@
 config {
   type: "view",
-  name: "transformed_radius",
+  name: "transformed-radius",
   description: "A view containing unique radius with transformed components."
 }
 
@@ -11,7 +11,7 @@ WITH distinct_radius AS (
     ANY_VALUE(radius_country) AS country,
     ANY_VALUE(radius_region) AS region
   FROM
-    ${ref("filtered_source")}
+    ${ref("filtered-source")}
   GROUP BY
     radius
 ),
