@@ -4,7 +4,7 @@ config {
   description: "A view containing the daily data metric with transformed components.",
   bigquery: {
     partitionBy: "full_date",
-    clusterBy: ["metric-id"]
+    clusterBy: ["metric_id"]
   }
 }
 

@@ -12,6 +12,8 @@ WITH staging_institutions AS (
     auth_status
   FROM
     ${ref("filtered-source")}
+  WHERE
+    auth_status = 'OK'
   GROUP BY
     domain, auth_status
 ),
@@ -35,13 +37,9 @@ incremental_ids AS (
     auth_status,
     COALESCE(
       institution_id,
-      CASE 
-        WHEN auth_status = 'OK' THEN
-          ROW_NUMBER() OVER (ORDER BY domain) + COALESCE((
-            SELECT MAX(institution_id) FROM ${ref("dim_institution")} -- Get the max ID from the reference table
-          ), 0) -- Default MAX(nas_id) to 0 if the reference table is empty
-        ELSE NULL
-      END
+      ROW_NUMBER() OVER (ORDER BY domain) + COALESCE((
+        SELECT MAX(institution_id) FROM ${ref("dim_institution")} -- Get the max ID from the reference table
+      ), 0) -- Default MAX(nas_id) to 0 if the reference table is empty
     ) AS institution_id
   FROM
     institution_with_id

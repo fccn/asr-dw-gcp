@@ -3,7 +3,6 @@ config {
   materialized: true,
   name: "distinct-user-hit",
   description: "A view containing distinct user hits with transformed components.",
-  dependencies: ["load-webhook-info"]
 }
 
 SELECT DISTINCT

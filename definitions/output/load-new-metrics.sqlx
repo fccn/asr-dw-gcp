@@ -1,0 +1,10 @@
+config { type: "operations" }
+
+INSERT INTO
+  ${ref("fact_data_metric")}
+SELECT
+  *
+FROM
+  ${ref("updated-data-metrics")}
+WHERE
+  TRUE
