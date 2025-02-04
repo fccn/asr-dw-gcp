@@ -4,7 +4,7 @@ MERGE INTO
   ${ref("dim_nas")} AS TARGET
 USING (
   SELECT *
-  FROM ${ref("transformed-nas")}
+  FROM ${ref("es-nas")}
   WHERE nas_id IS NOT NULL
 ) AS source
 ON

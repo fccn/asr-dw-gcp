@@ -13,4 +13,4 @@ SELECT DISTINCT
   user_hash,
   auth_status
 FROM
-  ${ref("filtered-source-with-id")}
+  ${ref("es-logs-with-id")}

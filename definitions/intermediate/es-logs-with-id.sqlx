@@ -1,6 +1,6 @@
 config {
   type: "table",
-  name: "filtered-source-with-id",
+  name: "es-logs-with-id",
   description: "A table containing the filtered source data with transformed components.",
   bigquery: {
     partitionBy: "full_date",
@@ -20,13 +20,13 @@ WITH transformed_source AS (
     radius.radius_id AS transformed_radius,
     nas.nas_id AS transformed_nas
   FROM
-    ${ref("filtered-source")} src
+    ${ref("fetched-es-logs")} src
   LEFT JOIN
-    ${ref("transformed-institution")} institution ON src.domain = institution.domain AND src.auth_status = institution.auth_status
+    ${ref("es-institutions")} institution ON src.domain = institution.domain AND src.auth_status = institution.auth_status
   LEFT JOIN
-    ${ref("transformed-radius")} radius ON src.radius = radius.radius
+    ${ref("es-radius")} radius ON src.radius = radius.radius
   LEFT JOIN
-    ${ref("transformed-nas")} nas ON src.nas = nas.nas
+    ${ref("es-nas")} nas ON src.nas = nas.nas
 )
 
 

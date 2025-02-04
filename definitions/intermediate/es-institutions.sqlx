@@ -1,0 +1,73 @@
+config {
+  type: "view",
+  name: "es-institutions",
+  description: "A view containing unique institutions with transformed components.",
+  dependencies: ["load-webhook-info"]
+}
+
+WITH staging_institutions AS (
+  -- Step 1: Get distinct domains, auth_status, and associated columns
+  SELECT
+    domain,
+    auth_status
+  FROM
+    ${ref("fetched-es-logs")}
+  WHERE
+    auth_status = 'OK'
+  GROUP BY
+    domain, auth_status
+),
+institution_with_id AS (
+  -- Step 2: Join with the reference table to get existing IDs
+  SELECT
+    staging.domain,
+    staging.auth_status,
+    dw.institution_id,
+    dw.codename
+  FROM
+    staging_institutions staging
+  LEFT JOIN
+    ${ref("dim_institution")} dw
+  ON
+    staging.domain = dw.realm
+),
+incremental_ids AS (
+  -- Step 3: Generate incremental IDs for new domain entries
+  SELECT
+    domain,
+    auth_status,
+    codename,
+    COALESCE(
+      institution_id,
+      ROW_NUMBER() OVER (ORDER BY domain) + COALESCE((
+        SELECT MAX(institution_id) FROM ${ref("dim_institution")}
+      ), 0)
+    ) AS institution_id
+  FROM
+    institution_with_id
+),
+matched_codenames AS (
+  -- Step 4: Use LEFT JOIN to find the best codename match for subdomains
+  SELECT
+    ids.institution_id,
+    ids.domain AS realm,
+    ids.auth_status,
+    COALESCE(ids.codename, matched.codename) AS codename,
+    ROW_NUMBER() OVER (PARTITION BY ids.domain ORDER BY LENGTH(matched.realm) DESC) AS rank
+  FROM
+    incremental_ids ids
+  LEFT JOIN
+    ${ref("dim_institution")} matched
+  ON
+    ids.domain LIKE CONCAT('%', matched.realm)
+)
+-- Step 5: Output the final result, selecting only the best match for codename
+SELECT
+  institution_id,
+  codename,
+  realm,
+  auth_status,
+FROM
+  matched_codenames
+WHERE
+  rank = 1

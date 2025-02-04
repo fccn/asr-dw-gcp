@@ -16,7 +16,7 @@ WITH distinct_data AS (
     radius_id,
     nas_id
   FROM
-    ${ref("filtered-source-with-id")}
+    ${ref("es-logs-with-id")}
 ),
 data_with_service_id as (
   SELECT

@@ -14,7 +14,7 @@ upsert_data AS (
         whi.*,
         COALESCE(dim.institution_id, max_id.max_id + ROW_NUMBER() OVER (ORDER BY whi.realm)) AS institution_id
     FROM
-        ${ref("webhook-institutions")} AS whi
+        ${ref("fetched-webhook-institutions")} AS whi
     LEFT JOIN
         ${ref("dim_institution")} AS dim
     ON

@@ -15,7 +15,7 @@ WITH aggregated_data AS (
     COUNT(CASE WHEN auth_status = '${auth_status.FAILED_HIT}' THEN 1 END) AS auth_fail_count,
     COUNT(*) AS auth_total_count
   FROM
-    ${ref("filtered-source-with-id")}
+    ${ref("es-logs-with-id")}
   GROUP BY
     full_date,
     institution_id,

@@ -3,7 +3,7 @@ config { type: "operations" }
 MERGE INTO
   ${ref("dim_date")} AS target
 USING
-  ${ref("transformed-date")} AS source
+  ${ref("es-date")} AS source
 ON
   target.full_date = source.full_date
 WHEN NOT MATCHED THEN

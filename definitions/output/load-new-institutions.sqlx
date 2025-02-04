@@ -4,12 +4,12 @@ MERGE INTO
   ${ref("dim_institution")} AS TARGET
 USING (
   SELECT *
-  FROM ${ref("transformed-institution")}
+  FROM ${ref("es-institutions")}
   WHERE institution_id IS NOT NULL
 ) AS source
 ON
-  target.realm = source.domain
+  target.realm = source.realm
 WHEN NOT MATCHED THEN
-    INSERT (institution_id, realm)
+    INSERT (institution_id, codename, realm)
 VALUES
-  (source.institution_id, source.domain)
+  (source.institution_id, source.codename, source.realm)
