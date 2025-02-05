@@ -22,7 +22,7 @@ WITH transformed_source AS (
   FROM
     ${ref("fetched-es-logs")} src
   LEFT JOIN
-    ${ref("es-institutions")} institution ON src.domain = institution.realm AND src.auth_status = institution.auth_status
+    ${ref("es-institutions")} institution ON src.domain = institution.realm
   LEFT JOIN
     ${ref("es-radius")} radius ON src.radius = radius.radius
   LEFT JOIN
