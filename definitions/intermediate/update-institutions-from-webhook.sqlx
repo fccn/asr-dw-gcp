@@ -1,5 +1,5 @@
 config {
-  type: "incremental"
+  type: "view"
 }
 
 -- Get the current largest institution_id

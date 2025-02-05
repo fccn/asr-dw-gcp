@@ -1,22 +1,15 @@
 config {
   type: "table",
   name: "data-metrics",
-  description: "A view containing the daily data metric with transformed components.",
-  bigquery: {
-    partitionBy: "full_date",
-    clusterBy: ["metric_id"]
-  }
+  description: "A partitioned table containing the daily data metric before calculation."
 }
 
 
-WITH distinct_data AS (
-  SELECT DISTINCT
-    full_date,
-    institution_id,
-    radius_id,
-    nas_id
+WITH filtered_data AS (
+  SELECT
+    *
   FROM
-    ${ref("es-logs-with-id")}
+    ${ref("filtered-es-logs")}
 ),
 data_with_service_id as (
   SELECT
@@ -26,7 +19,7 @@ data_with_service_id as (
     radius_id,
     nas_id
   FROM
-    distinct_data
+    filtered_data
   LEFT JOIN
     ${ref("dim_service")} svc ON svc.name = "eduroam"
 ),

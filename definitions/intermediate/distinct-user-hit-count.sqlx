@@ -13,7 +13,7 @@ SELECT
   COUNT(CASE WHEN auth_status = '${auth_status.FAILED_HIT}' THEN 1 END) AS auth_fail_count,
   COUNT(DISTINCT user_hash) AS auth_total_count
 FROM
-  ${ref("distinct-user-hit")}
+  ${ref("new-distinct-user-hit")}
 GROUP BY
   full_date,
   institution_id,

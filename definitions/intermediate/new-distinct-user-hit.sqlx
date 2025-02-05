@@ -1,0 +1,36 @@
+config {
+  type: "view",
+  name: "new-distinct-user-hit",
+  description: "A view containing only new distinct user hits.",
+}
+
+
+
+WITH date_range AS (
+  SELECT
+    MIN(full_date) AS min_dt,
+    MAX(full_date) AS max_dt
+  FROM ${ref("es-logs-with-id")}
+)
+SELECT DISTINCT
+  s.full_date,
+  s.institution_id,
+  s.radius_id,
+  s.nas_id,
+  s.user_hash,
+  s.auth_status
+FROM ${ref("es-logs-with-id")} s
+CROSS JOIN date_range d
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM ${ref("fact_distinct_user_hit")} t
+  WHERE
+    t.full_date = s.full_date
+    AND (t.institution_id = s.institution_id OR (t.institution_id IS NULL AND s.institution_id IS NULL))
+    AND (t.radius_id = s.radius_id OR (t.radius_id IS NULL AND s.radius_id IS NULL))
+    AND (t.nas_id = s.nas_id OR (t.nas_id IS NULL AND s.nas_id IS NULL))
+    -- For string comparisons --
+    AND COALESCE(t.user_hash, '') = COALESCE(s.user_hash, '')
+    AND COALESCE(t.auth_status, '') = COALESCE(s.auth_status, '')
+)
+AND s.full_date BETWEEN d.min_dt AND d.max_dt
