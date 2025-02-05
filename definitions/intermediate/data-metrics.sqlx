@@ -21,7 +21,7 @@ data_with_service_id as (
   FROM
     filtered_data
   LEFT JOIN
-    ${ref("dim_service")} svc ON svc.name = "eduroam"
+    ${ref("dim_service")} svc ON svc.name = '${service.SERVICE_NAME}'
 ),
 data_with_metrics as (
   SELECT
