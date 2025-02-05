@@ -1,5 +1,5 @@
 config {
-  type: "view",
+  type: "table",
   name: "new-distinct-user-hit",
   description: "A view containing only new distinct user hits.",
 }
