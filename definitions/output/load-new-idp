@@ -1,3 +1,5 @@
+config { type: "operations" }
+
 MERGE INTO
   `datawarehouseasr.data_warehouse.dim_identityprovider` AS TARGET
 USING (
