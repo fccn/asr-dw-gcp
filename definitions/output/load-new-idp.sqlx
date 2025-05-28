@@ -5,7 +5,7 @@ MERGE INTO
 USING (
   SELECT *
   FROM ${ref("influxdb_rctsaai_stats")}
-  WHERE idp_id_id IS NOT NULL
+  WHERE idp_id IS NOT NULL
 ) AS source
 ON
   target.idp_id = source.idp_id
