@@ -1,15 +1,22 @@
-config { type: "operations" }
+config {
+    type: "operations"
+}
 
 MERGE INTO
   ${ref("dim_serviceprovider")} AS TARGET
-USING (
-  SELECT *
-  FROM ${ref("influxdb_rctsaai_stats")}
-  WHERE sp_id IS NOT NULL
-) AS source
+USING
+  (
+  SELECT
+    *
+  FROM
+    ${ref("influxdb_rctsaai_stats")}
+  WHERE
+    sp_id IS NOT NULL ) AS SOURCE
 ON
   target.sp_id = source.sp_id
-WHEN NOT MATCHED THEN
-    INSERT (sp_id)
+  WHEN NOT MATCHED
+  THEN
+INSERT
+  (sp_id)
 VALUES
   (source.sp_id)
