@@ -1,0 +1,22 @@
+config {
+    type: "operations"
+}
+
+MERGE INTO
+  `datawarehouseasr.data_warehouse.dim_identityprovider` AS TARGET
+USING
+  (
+  SELECT
+    DISTINCT idp_id
+  FROM
+    `datawarehouseasr.staging.influxdb_rctsaai_stats`
+  WHERE
+    idp_id IS NOT NULL ) AS SOURCE
+ON
+  target.idp_id = source.idp_id
+  WHEN NOT MATCHED
+  THEN
+INSERT
+  (idp_id)
+VALUES
+  (source.idp_id)
