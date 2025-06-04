@@ -1,7 +1,7 @@
 config {
   type: "view",
   name: "user-hit-count-influx",
-  description: "User hit counts por (idp_id, sp_id, full_date) vindos do InfluxDB."
+  description: "User hit counts por (idp_id, sp_id, full_date) vindos do InfluxDB com IDs numéricos."
 }
 
 SELECT
@@ -9,10 +9,18 @@ SELECT
   NULL AS institution_id,
   NULL AS radius_id,
   NULL AS nas_id,
-  idp_id,
-  sp_id,
+  idp_resolved.idp_id,
+  sp_resolved.sp_id,
   count_user_id AS auth_total_count,
   NULL AS auth_ok_count,
   NULL AS auth_fail_count
 FROM
-  ${ref("fetched-influx-logs")}
+  ${ref("fetched-influx-logs")} logs
+LEFT JOIN
+  ${ref("influx-idp")} idp_resolved
+ON
+  logs.idp_id = idp_resolved.idp
+LEFT JOIN
+  ${ref("influx-sp")} sp_resolved
+ON
+  logs.sp_id = sp_resolved.sp

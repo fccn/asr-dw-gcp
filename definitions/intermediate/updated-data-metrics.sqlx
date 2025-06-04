@@ -16,8 +16,8 @@ WITH elastic_metrics AS (
     dm.institution_id,
     dm.radius_id,
     dm.nas_id,
-    NULL AS idp_id,
-    NULL AS sp_id,
+    CAST(NULL AS INT64) AS idp_id,
+    CAST(NULL AS INT64) AS sp_id,
     dm.metric_id,    
     CASE 
       WHEN sm.name = '${metrics.TOTAL_HITS}' THEN uhc.auth_total_count
@@ -36,6 +36,7 @@ WITH elastic_metrics AS (
   JOIN
     ${ref("user-hit-count")} uhc ON dm.full_date = uhc.full_date AND dm.institution_id = uhc.institution_id AND dm.radius_id = uhc.radius_id AND dm.nas_id = uhc.nas_id
 ),
+
 
 -- === METRICAS DO INFLUX ===
 influx_metrics AS (
