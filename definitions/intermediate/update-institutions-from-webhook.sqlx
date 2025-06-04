@@ -1,48 +1,56 @@
 config {
-  type: "view"
+  type: "view",
+  name: "update-institutions-from-webhook",
+  description: "View que prepara dados de instituições a inserir na dim_institution, com idp_id como chave estrangeira."
 }
 
--- Get the current largest institution_id
+-- 1. Obter o maior institution_id atual
 WITH max_id AS (
-    SELECT COALESCE(MAX(institution_id), 0) AS max_id
-    FROM ${ref("dim_institution")}
+  SELECT COALESCE(MAX(institution_id), 0) AS max_id
+  FROM ${ref("dim_institution")}
 ),
 
--- Prepare the new or updated data
+-- 2. Preparar os dados novos ou atualizados
 upsert_data AS (
-    SELECT
-        whi.*,
-        idp,
-        COALESCE(dim.institution_id, max_id.max_id + ROW_NUMBER() OVER (ORDER BY whi.realm)) AS institution_id
-    FROM
-        ${ref("fetched-webhook-institutions")} AS whi
-    LEFT JOIN
-        ${ref("dim_institution")} AS dim
-    ON
-        whi.realm = dim.realm
-    CROSS JOIN
-        max_id
+  SELECT
+    whi.codename,
+    whi.description,
+    whi.realm,
+    whi.member,
+    idp_table.idp_id,
+    COALESCE(dim.institution_id, max_id.max_id + ROW_NUMBER() OVER (ORDER BY whi.realm)) AS institution_id
+  FROM
+    ${ref("fetched-webhook-institutions")} AS whi
+  LEFT JOIN
+    ${ref("dim_identityprovider")} AS idp_table
+    ON whi.idp = idp_table.idp
+  LEFT JOIN
+    ${ref("dim_institution")} AS dim
+    ON whi.realm = dim.realm
+  CROSS JOIN
+    max_id
 ),
-
--- Filter to include only rows that have changed or are new
+-- 3. Filtrar apenas os dados novos ou que sofreram alterações
 filtered_data AS (
-    SELECT
-        upsert_data.institution_id,
-        upsert_data.realm,
-        upsert_data.codename,
-        upsert_data.description,
-        upsert_data.member,
-        upsert_data.idp
-    FROM upsert_data
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM ${ref("dim_institution")} AS dim
-        WHERE dim.realm = upsert_data.realm
-          AND dim.codename = upsert_data.codename
-          AND dim.description = upsert_data.description
-          AND dim.member = upsert_data.member
-    )
+  SELECT
+    institution_id,
+    realm,
+    codename,
+    description,
+    member,
+    idp_id
+  FROM upsert_data
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM ${ref("dim_institution")} AS dim
+    WHERE
+      dim.realm = upsert_data.realm AND
+      dim.codename = upsert_data.codename AND
+      dim.description = upsert_data.description AND
+      dim.member = upsert_data.member AND
+      dim.idp_id = upsert_data.idp_id
+  )
 )
 
--- Insert the new or updated data into the target table
+-- 4. Retornar os dados filtrados prontos a inserir
 SELECT * FROM filtered_data
