@@ -10,8 +10,9 @@ WITH deduplicated AS (
         CI1_descricao AS description,
         CI1_org AS org,
         Radius_Realms as realm,
-        CI1_membro as member
-    FROM ${ref("webhook_eduroam_institutions")}
+        CI1_membro as member,
+        IDP_Identity_IDs as idp
+    FROM ${ref("webhook_info")}
 ),
 ranked AS (
     SELECT
@@ -22,13 +23,15 @@ ranked AS (
         END AS description,
         realm,
         member,
-        ROW_NUMBER() OVER (PARTITION BY realm ORDER BY codename) AS row_num
+        ROW_NUMBER() OVER (PARTITION BY realm ORDER BY codename) AS row_num,
+        idp
     FROM deduplicated
 )
 SELECT
     codename,
     description,
     realm,
-    member
+    member,
+    idp
 FROM ranked
 WHERE row_num = 1
