@@ -1,0 +1,18 @@
+config {
+  type: "view",
+  name: "user-hit-count-influx",
+  description: "User hit counts por (idp_id, sp_id, full_date) vindos do InfluxDB."
+}
+
+SELECT
+  full_date,
+  NULL AS institution_id,
+  NULL AS radius_id,
+  NULL AS nas_id,
+  idp_id,
+  sp_id,
+  count_user_id AS auth_total_count,
+  NULL AS auth_ok_count,
+  NULL AS auth_fail_count
+FROM
+  ${ref("fetched-influx-logs")}
