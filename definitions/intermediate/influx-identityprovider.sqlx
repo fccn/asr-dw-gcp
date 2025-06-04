@@ -1,0 +1,48 @@
+config {
+  type: "view",
+  name: "influx-idp",
+  description: "View with distinct identity providers and assigned IDs."
+}
+
+WITH raw_idps AS (
+  SELECT DISTINCT
+    idp,
+    status
+  FROM ${ref("fetched-webhook-institutions")}
+  WHERE idp IS NOT NULL
+
+  UNION DISTINCT
+
+  SELECT DISTINCT
+    idp_id AS idp,
+    'unknown' AS status
+  FROM ${ref("fetched-influx-logs")}
+  WHERE idp_id IS NOT NULL
+),
+idp_with_id AS (
+  SELECT
+    raw.idp,
+    raw.status,
+    dw.idp_id
+  FROM raw_idps raw
+  LEFT JOIN ${ref("dim_identityprovider")} dw
+  ON raw.idp = dw.idp
+),
+idp_final AS (
+  SELECT
+    idp,
+    status,
+    COALESCE(
+      idp_id,
+      ROW_NUMBER() OVER (ORDER BY idp) + COALESCE((
+        SELECT MAX(idp_id) FROM ${ref("dim_identityprovider")}
+      ), 0)
+    ) AS idp_id
+  FROM idp_with_id
+)
+
+SELECT
+  idp_id,
+  idp,
+  status
+FROM idp_final

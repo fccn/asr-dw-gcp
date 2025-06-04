@@ -1,21 +1,12 @@
 config { type: "operations" }
 
 MERGE INTO
-  ${ref("dim_identityprovider")} AS TARGET
+  ${ref("dim_identityprovider")} AS target
 USING (
-  SELECT *
-  FROM ${ref("influxdb_rctsaai_stats")}
-  WHERE idp_id IS NOT NULL
+  SELECT * FROM ${ref("influx-idp")} WHERE idp_id IS NOT NULL
 ) AS source
 ON
-  target.idp_id = source.idp_id
-WHEN MATCHED AND (
-  source.status != target.status
-)
-THEN
-  UPDATE SET
-  target.status = source.status
+  target.idp = source.idp
 WHEN NOT MATCHED THEN
-    INSERT (idp_id, status)
-VALUES
-  (source.idp_id, source.status)
+  INSERT (idp_id, idp, status)
+  VALUES (source.idp_id, source.idp, source.status)

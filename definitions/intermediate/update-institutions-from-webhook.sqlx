@@ -12,6 +12,7 @@ WITH max_id AS (
 upsert_data AS (
     SELECT
         whi.*,
+        idp,
         COALESCE(dim.institution_id, max_id.max_id + ROW_NUMBER() OVER (ORDER BY whi.realm)) AS institution_id
     FROM
         ${ref("fetched-webhook-institutions")} AS whi

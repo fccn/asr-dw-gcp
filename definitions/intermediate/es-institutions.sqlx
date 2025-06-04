@@ -9,7 +9,7 @@ WITH staging_institutions AS (
   -- Step 1: Get distinct domains, auth_status, and associated columns
   SELECT
     domain,
-    auth_status
+    auth_status,
   FROM
     ${ref("fetched-es-logs")}
   WHERE

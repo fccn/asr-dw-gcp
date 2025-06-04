@@ -6,12 +6,13 @@ config {
 
 WITH deduplicated AS (
     SELECT DISTINCT
-        SPLIT(CI1_codename, ':')[OFFSET(ARRAY_LENGTH(SPLIT(CI1_codename, ':')) - 1)] AS codename,
+        CI1_codename as codename,
         CI1_descricao AS description,
         CI1_org AS org,
         Radius_Realms as realm,
         CI1_membro as member,
-        IDP_Entity_IDs as idp
+        IDP_Entity_IDs as idp,
+        IDP_status as status
     FROM ${ref("webhook_info")}
 ),
 ranked AS (
@@ -24,7 +25,8 @@ ranked AS (
         realm,
         member,
         ROW_NUMBER() OVER (PARTITION BY realm ORDER BY codename) AS row_num,
-        idp
+        idp,
+        status
     FROM deduplicated
 )
 SELECT
@@ -32,6 +34,7 @@ SELECT
     description,
     realm,
     member,
-    idp
+    idp,
+    status
 FROM ranked
 WHERE row_num = 1
