@@ -30,7 +30,8 @@ filtered_data AS (
         upsert_data.realm,
         upsert_data.codename,
         upsert_data.description,
-        upsert_data.member
+        upsert_data.member,
+        upsert_data.idp
     FROM upsert_data
     WHERE NOT EXISTS (
         SELECT 1

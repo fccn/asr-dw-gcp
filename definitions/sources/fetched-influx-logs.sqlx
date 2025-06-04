@@ -1,0 +1,14 @@
+config {
+  type: "view",
+  materialized: true,
+  name: "fetched-influx-logs"
+}
+
+SELECT
+  DATE(timestamp) AS date,
+  idp_id,
+  sp_id,
+  count_user_id,
+  count_distinct_user_id
+FROM
+  ${ref("influxdb_rctsaai_stats")}

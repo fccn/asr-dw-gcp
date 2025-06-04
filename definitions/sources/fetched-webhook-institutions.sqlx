@@ -11,7 +11,7 @@ WITH deduplicated AS (
         CI1_org AS org,
         Radius_Realms as realm,
         CI1_membro as member,
-        IDP_Identity_IDs as idp
+        IDP_Entity_IDs as idp
     FROM ${ref("webhook_info")}
 ),
 ranked AS (

@@ -10,6 +10,6 @@ USING (
 ON
   target.realm = source.realm
 WHEN NOT MATCHED THEN
-    INSERT (institution_id, codename, realm)
+    INSERT (institution_id, codename, realm, idp)
 VALUES
-  (source.institution_id, source.codename, source.realm)
+  (source.institution_id, source.codename, source.realm, source.idp)
