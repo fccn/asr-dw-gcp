@@ -14,7 +14,7 @@ SELECT
   COALESCE(radius_dim.radius_id, -1) AS radius_id,
   COALESCE(nas_dim.nas_id, -1) AS nas_id,
   src.user_hash,
-  src.auth_status  -- Keep all statuses for future metrics (OK, FAIL, etc.)
+  src.auth_status  -- Keep all statuses for future metrics
   
 FROM ${ref("fetched-es-logs")} src
 LEFT JOIN ${ref("dim_institution")} institution 
