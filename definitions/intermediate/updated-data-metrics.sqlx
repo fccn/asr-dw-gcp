@@ -1,68 +1,32 @@
 config {
   type: "table",
   name: "updated-data-metrics",
-  description: "Métricas de hits para ES e Influx, com distinção clara por serviço.",
+  description: "View simplificada focada na métrica 4 (distinct user hits), com estrutura preparada para futuras expansões.",
   bigquery: {
     partitionBy: "full_date",
     clusterBy: ["metric_id"]
   }
 }
 
--- === METRICAS DO ELASTICSEARCH ===
-WITH elastic_metrics AS (
-  SELECT
-    dm.full_date,
-    1 AS service_id, -- 1 = Elastic
-    dm.institution_id,
-    dm.radius_id,
-    dm.nas_id,
-    CAST(NULL AS INT64) AS idp_id,
-    CAST(NULL AS INT64) AS sp_id,
-    dm.metric_id,    
-    CASE 
-      WHEN sm.name = '${metrics.TOTAL_HITS}' THEN uhc.auth_total_count
-      WHEN sm.name = '${metrics.TOTAL_OK_HITS}' THEN uhc.auth_ok_count
-      WHEN sm.name = '${metrics.TOTAL_FAIL_HITS}' THEN uhc.auth_fail_count
-      WHEN sm.name = '${metrics.DISTINCT_HITS}' THEN duhc.auth_total_count
-      WHEN sm.name = '${metrics.DISTINCT_OK_HITS}' THEN duhc.auth_ok_count
-      WHEN sm.name = '${metrics.DISTINCT_FAIL_HITS}' THEN duhc.auth_fail_count
-    END AS value
-  FROM
-    ${ref("data-metrics")} dm
-  JOIN
-    ${ref("selected-metrics")} sm ON dm.metric_id = sm.metric_id
-  JOIN
-    ${ref("distinct-user-hit-count")} duhc ON dm.full_date = duhc.full_date AND dm.institution_id = duhc.institution_id AND dm.radius_id = duhc.radius_id AND dm.nas_id = duhc.nas_id
-  JOIN
-    ${ref("user-hit-count")} uhc ON dm.full_date = uhc.full_date AND dm.institution_id = uhc.institution_id AND dm.radius_id = uhc.radius_id AND dm.nas_id = uhc.nas_id
-),
+SELECT
+  dm.full_date,
+  dm.service_id,
+  dm.institution_id,
+  dm.radius_id,
+  dm.nas_id,
+  dm.idp_id,
+  dm.sp_id,
+  dm.metric_id,
 
+  -- Valor da métrica (neste momento só usamos distinct hit count (4) )
+  CASE
+    WHEN dm.metric_id = 4 THEN dm.value
 
--- === METRICAS DO INFLUX ===
-influx_metrics AS (
-  SELECT
-    iuhc.full_date,
-    2 AS service_id, -- 2 = Influx
-    NULL AS institution_id,
-    NULL AS radius_id,
-    NULL AS nas_id,
-    iuhc.idp_id,
-    iuhc.sp_id,
-    sm.metric_id,
-    CASE 
-      WHEN sm.name = '${metrics.TOTAL_HITS}' THEN iuhc.auth_total_count
-      WHEN sm.name = '${metrics.DISTINCT_HITS}' THEN iduhc.auth_total_count
-    END AS value
-  FROM
-    ${ref("selected-metrics")} sm
-  LEFT JOIN
-    ${ref("user-hit-count-influx")} iuhc ON TRUE
-  LEFT JOIN
-    ${ref("distinct-user-hit-count-influx")} iduhc 
-    ON iuhc.full_date = iduhc.full_date AND iuhc.idp_id = iduhc.idp_id AND iuhc.sp_id = iduhc.sp_id
-)
+    -- === Futuras métricas===
+    -- WHEN dm.metric_id = X THEN 
 
--- === JUNÇÃO FINAL ===
-SELECT * FROM elastic_metrics
-UNION ALL
-SELECT * FROM influx_metrics
+    ELSE NULL
+  END AS value
+
+FROM
+  ${ref("data-metrics")} dm
