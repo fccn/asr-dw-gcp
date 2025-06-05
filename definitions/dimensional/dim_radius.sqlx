@@ -1,0 +1,19 @@
+config {
+  type: "table",
+  name: "dim_radius",
+  description: "RADIUS dimension from Elasticsearch data."
+}
+WITH with_ids AS (
+  SELECT
+    radius,
+    country,
+    region,
+    ROW_NUMBER() OVER (ORDER BY radius) AS radius_id
+  FROM ${ref("es-radius-staging")}
+)
+SELECT
+  radius_id,
+  radius,
+  country,
+  region
+FROM with_ids

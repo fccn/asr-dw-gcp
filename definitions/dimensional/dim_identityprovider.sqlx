@@ -1,0 +1,41 @@
+config {
+  type: "table",
+  name: "dim_identityprovider",
+  description: "Identity Provider dimension combining webhook and log sources."
+}
+WITH all_idps AS (
+  -- From webhook (authoritative source)
+  SELECT DISTINCT 
+    idp, 
+    COALESCE(status, 'unknown') AS status
+  FROM ${ref("fetched-webhook-institutions")}
+  WHERE idp IS NOT NULL
+  
+  UNION DISTINCT
+  
+  -- From influx logs
+  SELECT DISTINCT 
+    idp,
+    status 
+  FROM ${ref("influx-idp-staging")}
+  
+  UNION DISTINCT
+  
+  -- From ES logs
+  SELECT DISTINCT
+    idp_identifier AS idp,
+    'unknown' AS status
+  FROM ${ref("es-institutions-staging")}
+),
+with_ids AS (
+  SELECT
+    idp,
+    status,
+    ROW_NUMBER() OVER (ORDER BY idp) AS idp_id
+  FROM all_idps
+)
+SELECT 
+  idp_id,
+  idp, 
+  status
+FROM with_ids

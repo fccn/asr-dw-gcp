@@ -1,0 +1,18 @@
+config {
+  type: "table",
+  name: "dim_metric", 
+  description: "Metric dimension with predefined metrics."
+}
+SELECT * FROM (
+  SELECT 1 AS metric_id, 'total hits' AS name, 'count' AS units
+  UNION ALL
+  SELECT 2 AS metric_id, 'total ok hits' AS name, 'count' AS units
+  UNION ALL
+  SELECT 3 AS metric_id, 'total fail hits' AS name, 'count' AS units
+  UNION ALL
+  SELECT 4 AS metric_id, 'distinct hits' AS name, 'count' AS units
+  UNION ALL
+  SELECT 5 AS metric_id, 'distinct ok hits' AS name, 'count' AS units
+  UNION ALL
+  SELECT 6 AS metric_id, 'distinct fail hits' AS name, 'count' AS units
+)

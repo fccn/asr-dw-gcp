@@ -1,0 +1,55 @@
+config {
+  type: "table",
+  name: "dim_institution",
+  description: "Institution dimension from webhook reference data."
+}
+WITH webhook_with_idp AS (
+  SELECT
+    COALESCE(whi.codename, whi.realm) AS codename,
+    COALESCE(whi.description, 'Institution') AS description,
+    whi.realm,
+    COALESCE(whi.member, FALSE) AS member,  -- Boolean field
+    idp.idp_id  -- Reference to dim_identityprovider.idp_id
+  FROM ${ref("fetched-webhook-institutions")} whi
+  LEFT JOIN ${ref("dim_identityprovider")} idp 
+    ON whi.idp = idp.idp
+),
+-- Add institutions from ES logs that aren't in webhook
+es_institutions AS (
+  SELECT
+    es.codename,
+    es.description,
+    es.realm,
+    es.member,
+    idp.idp_id
+  FROM ${ref("es-institutions-staging")} es
+  LEFT JOIN ${ref("dim_identityprovider")} idp 
+    ON es.idp_identifier = idp.idp
+  WHERE NOT EXISTS (
+    SELECT 1 FROM webhook_with_idp w 
+    WHERE w.realm = es.realm
+  )
+),
+all_institutions AS (
+  SELECT * FROM webhook_with_idp
+  UNION ALL
+  SELECT * FROM es_institutions
+),
+with_ids AS (
+  SELECT
+    codename,
+    description,
+    realm, 
+    member,
+    idp_id,
+    ROW_NUMBER() OVER (ORDER BY realm) AS institution_id
+  FROM all_institutions
+)
+SELECT
+  institution_id,
+  codename,
+  description,
+  realm,
+  member,
+  idp_id
+FROM with_ids

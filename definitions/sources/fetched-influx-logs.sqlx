@@ -1,0 +1,18 @@
+config {
+    type: "view",
+    materialized: true,
+    name: "fetched-influx-logs",
+    description: "Materialized view with daily stats from InfluxDB for RCTSaai"
+}
+
+SELECT
+  DATE(timestamp) AS full_date,
+  idp_id,
+  sp_id,
+  count_user_id,
+  count_distinct_user_id
+FROM
+  ${ref("influxdb_rctsaai_stats")}
+WHERE
+  idp_id IS NOT NULL
+  AND sp_id IS NOT NULL

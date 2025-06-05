@@ -1,0 +1,15 @@
+config {
+  type: "view",
+  name: "es-date-staging",
+  description: "Extract dates from ES logs for dim_date."
+}
+SELECT DISTINCT
+  full_date,
+  EXTRACT(DAY FROM full_date) AS day,
+  EXTRACT(MONTH FROM full_date) AS month,
+  EXTRACT(YEAR FROM full_date) AS year,
+  EXTRACT(QUARTER FROM full_date) AS quarter,
+  EXTRACT(WEEK FROM full_date) AS week,
+  EXTRACT(DAYOFWEEK FROM full_date) AS weekday
+FROM ${ref("fetched-es-logs")}
+WHERE full_date IS NOT NULL

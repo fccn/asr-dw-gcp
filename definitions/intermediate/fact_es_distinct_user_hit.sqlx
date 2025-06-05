@@ -1,0 +1,25 @@
+config {
+  type: "table",
+  name: "fact_es_distinct_user_hit",
+  description: "Individual user hits from ES logs with dimension IDs - ES-specific intermediate table.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["auth_status", "institution_id"]
+  }
+}
+SELECT
+  src.full_date,
+  COALESCE(institution.institution_id, -1) AS institution_id,
+  COALESCE(radius_dim.radius_id, -1) AS radius_id,
+  COALESCE(nas_dim.nas_id, -1) AS nas_id,
+  src.user_hash,
+  src.auth_status  -- Keep all statuses for future metrics (OK, FAIL, etc.)
+  
+FROM ${ref("fetched-es-logs")} src
+LEFT JOIN ${ref("dim_institution")} institution 
+  ON src.domain = institution.realm
+LEFT JOIN ${ref("dim_radius")} radius_dim 
+  ON src.radius = radius_dim.radius  
+LEFT JOIN ${ref("dim_nas")} nas_dim 
+  ON src.nas = nas_dim.nas
+-- Note: Not filtering by auth_status here to preserve all data for future metrics

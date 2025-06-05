@@ -1,0 +1,11 @@
+config {
+  type: "view",
+  name: "es-radius-staging", 
+  description: "Extract RADIUS data from ES logs for dim_radius."
+}
+SELECT DISTINCT
+  radius,
+  COALESCE(radius_country, 'Unknown') AS country,
+  COALESCE(radius_region, 'Unknown') AS region
+FROM ${ref("fetched-es-logs")}
+WHERE radius IS NOT NULL
