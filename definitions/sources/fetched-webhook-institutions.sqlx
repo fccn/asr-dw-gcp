@@ -1,7 +1,7 @@
 config {
     type: "view",
     name: "fetched-webhook-institutions",
-    description: "A view containing the institutions extracted from webhook."
+    description: "A view containing the institutions extracted from webhook - one row per institution."
 }
 WITH deduplicated AS (
     SELECT DISTINCT
@@ -9,10 +9,14 @@ WITH deduplicated AS (
         CI1_descricao AS description,
         CI1_org AS org,
         CI1_membro as member,
-        Radius_Realms as realm,
         IDP_Entity_IDs as idp,
-        IDP_status as status
+        IDP_status as status,
+        -- Take the first realm for each institution (or concatenate all realms)
+        STRING_AGG(DISTINCT Radius_Realms, '; ' ORDER BY Radius_Realms) as realm
     FROM ${ref("webhook_info")}
+    WHERE CI1_codename IS NOT NULL
+      AND IDP_Entity_IDs IS NOT NULL
+    GROUP BY 1,2,3,4,5,6
 ),
 ranked AS (
     SELECT
@@ -23,9 +27,9 @@ ranked AS (
         END AS description,
         realm,
         member,
-        ROW_NUMBER() OVER (PARTITION BY realm ORDER BY codename) AS row_num,
         idp,
-        status
+        status,
+        ROW_NUMBER() OVER (PARTITION BY codename ORDER BY codename) AS row_num
     FROM deduplicated
 )
 SELECT
