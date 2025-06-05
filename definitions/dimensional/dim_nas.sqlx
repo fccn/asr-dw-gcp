@@ -1,6 +1,7 @@
 config {
   type: "table",
-  name: "dim_nas", 
+  name: "dim_nas",
+  schema: "data_warehouse", 
   description: "NAS dimension from Elasticsearch data."
 }
 WITH with_ids AS (

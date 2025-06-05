@@ -1,6 +1,7 @@
 config {
   type: "table",
-  name: "dim_metric", 
+  name: "dim_metric",
+  schema: "data_warehouse", 
   description: "Metric dimension with predefined metrics."
 }
 SELECT * FROM (

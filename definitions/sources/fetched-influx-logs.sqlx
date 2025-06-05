@@ -4,7 +4,6 @@ config {
     name: "fetched-influx-logs",
     description: "Materialized view with daily stats from InfluxDB for RCTSaai"
 }
-
 SELECT
   DATE(timestamp) AS full_date,
   idp_id,

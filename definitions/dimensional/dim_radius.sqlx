@@ -1,6 +1,7 @@
 config {
   type: "table",
   name: "dim_radius",
+  schema: "data_warehouse",
   description: "RADIUS dimension from Elasticsearch data."
 }
 WITH with_ids AS (

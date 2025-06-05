@@ -1,6 +1,7 @@
 config {
   type: "table", 
   name: "dim_serviceprovider",
+  schema: "data_warehouse",
   description: "Service Provider dimension from InfluxDB only."
 }
 WITH with_ids AS (

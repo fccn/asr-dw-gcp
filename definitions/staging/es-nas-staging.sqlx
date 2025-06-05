@@ -1,11 +1,14 @@
 config {
-  type: "view", 
-  name: "es-nas-staging",
-  description: "Extract NAS data from ES logs for dim_nas."
+  type: "view",
+  name: "es-institutions-staging",
+  description: "Extract institution data from ES logs."
 }
 SELECT DISTINCT
-  nas,
-  COALESCE(nas_country, 'Unknown') AS country,
-  COALESCE(nas_region, 'Unknown') AS region
+  domain AS realm,
+  domain AS codename,  -- Use domain as codename
+  'From ES logs' AS description,
+  FALSE AS member,  -- Default to false for ES-discovered institutions
+  domain AS idp_identifier  -- Will map to dim_identityprovider.idp later
 FROM ${ref("fetched-es-logs")}
-WHERE nas IS NOT NULL
+WHERE domain IS NOT NULL 
+  AND auth_status = 'OK'

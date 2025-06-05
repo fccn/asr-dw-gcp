@@ -1,6 +1,7 @@
 config {
   type: "table",
   name: "fact_es_distinct_user_hit",
+  schema: "data_warehouse",
   description: "Individual user hits from ES logs with dimension IDs - ES-specific intermediate table.",
   bigquery: {
     partitionBy: "full_date",

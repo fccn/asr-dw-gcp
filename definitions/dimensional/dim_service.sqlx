@@ -1,6 +1,7 @@
 config {
   type: "table",
-  name: "dim_service", 
+  name: "dim_service",
+  schema: "data_warehouse", 
   description: "Service dimension with predefined services."
 }
 SELECT * FROM (

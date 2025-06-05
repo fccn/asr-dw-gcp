@@ -1,11 +1,12 @@
 config {
   type: "table",
   name: "dim_institution",
+  schema: "data_warehouse",
   description: "Institution dimension from webhook reference data."
 }
 WITH webhook_with_idp AS (
   SELECT
-    COALESCE(whi.codename, whi.realm) AS codename,
+    whi.codename,  -- Keep original codename from webhook
     COALESCE(whi.description, 'Institution') AS description,
     whi.realm,
     COALESCE(whi.member, FALSE) AS member,  -- Boolean field
