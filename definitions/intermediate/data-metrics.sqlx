@@ -1,47 +1,41 @@
 config {
   type: "table",
   name: "data-metrics",
-  description: "Tabela diária com os hits de utilizadores distintos por origem (ES/Influx)."
+  description: "A partitioned table containing the daily data metric before calculation."
 }
 
--- === Elasticsearch ===
-WITH es_user_hits AS (
+
+WITH filtered_data AS (
+  SELECT
+    *
+  FROM
+    ${ref("filtered-es-logs")}
+),
+data_with_service_id as (
   SELECT
     full_date,
-    1 AS service_id,
+    svc.service_id as service_id,
+    institution_id,
+    radius_id,
+    nas_id
+  FROM
+    filtered_data
+  LEFT JOIN
+    ${ref("dim_service")} svc ON svc.name = '${service.SERVICE_NAME}'
+),
+data_with_metrics as (
+  SELECT
+    full_date,
+    service_id,
     institution_id,
     radius_id,
     nas_id,
-    CAST(NULL AS INT64) AS idp_id,
-    CAST(NULL AS INT64) AS sp_id,
-    COUNT(DISTINCT user_hash) AS value
-  FROM ${ref("es-logs-with-id")}
-  WHERE auth_status = 'ACCEPT'
-  GROUP BY full_date, institution_id, radius_id, nas_id
-),
-
--- === Influx ===
-influx_with_info AS (
-  SELECT
-    f.full_date,
-    2 AS service_id,
-    inst.idp_id,
-    sp.sp_id,
-    inst.institution_id,
-    NULL AS radius_id,
-    NULL AS nas_id,
-    f.count_distinct_user_id AS value
-  FROM ${ref("fetched-influx-logs")} f
-  LEFT JOIN ${ref("influx-idp")} idp_map ON f.idp_id = idp_map.idp
-  LEFT JOIN ${ref("dim_institution")} inst ON inst.idp_id = idp_map.idp_id
-  LEFT JOIN ${ref("influx-sp")} sp ON f.sp_id = sp.sp
-),
-
--- === Union final ===
-combined_metrics AS (
-  SELECT * FROM es_user_hits
-  UNION ALL
-  SELECT * FROM influx_with_info
+    metric.metric_id,                       -- Add the metric_id from a constant table
+    CAST(0.0 AS FLOAT64) AS value          -- Default value for the "value" column
+  FROM
+    data_with_service_id
+  CROSS JOIN
+    ${ref("selected-metrics")} metric
 )
 
 SELECT
@@ -50,8 +44,8 @@ SELECT
   institution_id,
   radius_id,
   nas_id,
-  idp_id,
-  sp_id,
-  4 AS metric_id,
-  CAST(value AS FLOAT64) AS value
-FROM combined_metrics
+  metric_id,
+  value
+FROM 
+  data_with_metrics
+  

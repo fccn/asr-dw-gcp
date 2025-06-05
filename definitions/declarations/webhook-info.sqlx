@@ -1,7 +1,0 @@
-config {
-  type: "declaration",
-  database: "datawarehouseasr",
-  schema: "staging",
-  name: "webhook_info",
-  description: "Declaration for webhook info staging table."
-}

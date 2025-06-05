@@ -1,6 +1,4 @@
-config { 
-  type: "operations" 
-}
+config { type: "operations" }
 
 MERGE INTO
   ${ref("dim_institution")} AS TARGET
@@ -12,15 +10,6 @@ USING (
 ON
   target.realm = source.realm
 WHEN NOT MATCHED THEN
-  INSERT (
-    institution_id,
-    codename,
-    realm,
-    idp_id
-  )
-  VALUES (
-    source.institution_id,
-    source.codename,
-    source.realm,
-    source.idp_id
-  )
+    INSERT (institution_id, codename, realm)
+VALUES
+  (source.institution_id, source.codename, source.realm)
