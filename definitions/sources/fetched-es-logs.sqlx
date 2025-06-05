@@ -1,9 +1,8 @@
 config {
   type: "view",
   materialized: true,
-  name: "filtered-source"
+  name: "fetched-es-logs"
 }
-
 SELECT
   DATE(timestamp) AS full_date,
   auth_status,

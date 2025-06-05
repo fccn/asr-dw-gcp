@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  name: "dim_nas",
+  schema: "data_warehouse", 
+  description: "NAS dimension from Elasticsearch data."
+}
+WITH with_ids AS (
+  SELECT
+    nas,
+    country,
+    region,
+    ROW_NUMBER() OVER (ORDER BY nas) AS nas_id
+  FROM ${ref("es-nas-staging")}
+)
+SELECT
+  nas_id,
+  nas,
+  country,
+  region
+FROM with_ids

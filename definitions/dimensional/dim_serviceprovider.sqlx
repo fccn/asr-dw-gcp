@@ -1,0 +1,16 @@
+config {
+  type: "table", 
+  name: "dim_serviceprovider",
+  schema: "data_warehouse",
+  description: "Service Provider dimension from InfluxDB only."
+}
+WITH with_ids AS (
+  SELECT
+    sp,
+    ROW_NUMBER() OVER (ORDER BY sp) AS sp_id
+  FROM ${ref("influx-sp-staging")}
+)
+SELECT
+  sp_id,
+  sp
+FROM with_ids

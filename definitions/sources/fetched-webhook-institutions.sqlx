@@ -1,0 +1,39 @@
+config {
+    type: "view",
+    name: "fetched-webhook-institutions",
+    description: "A view containing the institutions extracted from webhook."
+}
+WITH deduplicated AS (
+    SELECT DISTINCT
+        CI1_codename as codename,
+        CI1_descricao AS description,
+        CI1_org AS org,
+        CI1_membro as member,
+        Radius_Realms as realm,
+        IDP_Entity_IDs as idp,
+        IDP_status as status
+    FROM ${ref("webhook_info")}
+),
+ranked AS (
+    SELECT
+        codename,
+        CASE 
+            WHEN org IS NULL THEN description
+            ELSE org
+        END AS description,
+        realm,
+        member,
+        ROW_NUMBER() OVER (PARTITION BY realm ORDER BY codename) AS row_num,
+        idp,
+        status
+    FROM deduplicated
+)
+SELECT
+    codename,
+    description,
+    realm,
+    member,
+    idp,
+    status
+FROM ranked
+WHERE row_num = 1

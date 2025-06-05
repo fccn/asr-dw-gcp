@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "staging",
+  name: "influxdb_rctsaai_stats",
+  description: "Declaration for rctsaai influxdb logs staging table."
+}

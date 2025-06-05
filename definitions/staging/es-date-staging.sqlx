@@ -1,9 +1,8 @@
 config {
   type: "view",
-  name: "transformed-date",
-  description: "A view containing unique dates with transformed components."
+  name: "es-date-staging",
+  description: "Extract dates from ES logs for dim_date."
 }
-
 SELECT DISTINCT
   full_date,
   EXTRACT(DAY FROM full_date) AS day,
@@ -11,5 +10,6 @@ SELECT DISTINCT
   EXTRACT(YEAR FROM full_date) AS year,
   EXTRACT(QUARTER FROM full_date) AS quarter,
   EXTRACT(WEEK FROM full_date) AS week,
-  FORMAT_TIMESTAMP('%A', TIMESTAMP(full_date)) AS weekday
-FROM ${ref("filtered-source")}
+  EXTRACT(DAYOFWEEK FROM full_date) AS weekday
+FROM ${ref("fetched-es-logs")}
+WHERE full_date IS NOT NULL

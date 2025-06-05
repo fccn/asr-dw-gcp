@@ -1,0 +1,11 @@
+config {
+  type: "table",
+  name: "dim_service",
+  schema: "data_warehouse", 
+  description: "Service dimension with predefined services."
+}
+SELECT * FROM (
+  SELECT 1 AS service_id, 'eduroam' AS name, 'eduroam' AS asr_service
+  UNION ALL
+  SELECT 2 AS service_id, 'RCTSAAI' AS name, 'rctsaai' AS asr_service
+)

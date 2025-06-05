@@ -1,0 +1,9 @@
+config {
+  type: "view",
+  name: "influx-sp-staging",
+  description: "Extract SP data from InfluxDB logs."
+}
+SELECT DISTINCT 
+  sp_id AS sp
+FROM ${ref("fetched-influx-logs")}
+WHERE sp_id IS NOT NULL

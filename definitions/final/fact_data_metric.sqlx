@@ -1,0 +1,97 @@
+config {
+  type: "table",
+  name: "fact_data_metric",
+  schema: "data_warehouse", 
+  description: "Final metrics table - ES via intermediate table, InfluxDB direct.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["service_id", "metric_id"]
+  }
+}
+-- === Elasticsearch Metrics (via intermediate table) ===
+WITH es_metrics AS (
+  -- Metric 4: Distinct Hits
+  SELECT
+    duh.full_date,
+    1 AS service_id,  -- Eduroam
+    duh.institution_id,
+    duh.radius_id,
+    duh.nas_id,
+    COALESCE(inst.idp_id, -1) AS idp_id,  -- Get IDP from institution
+    CAST(NULL AS INT64) AS sp_id,
+    4 AS metric_id,
+    COUNT(DISTINCT duh.user_hash) AS metric_value
+  FROM ${ref("fact_es_distinct_user_hit")} duh
+  LEFT JOIN ${ref("dim_institution")} inst 
+    ON duh.institution_id = inst.institution_id
+  GROUP BY 1,2,3,4,5,6,7,8
+  
+
+UNION ALL
+-- Metric 1: Total Hits
+SELECT
+  duh.full_date, 1 AS service_id, duh.institution_id, duh.radius_id, duh.nas_id,
+  COALESCE(inst.idp_id, -1) AS idp_id, CAST(NULL AS INT64) AS sp_id,
+  1 AS metric_id,
+  COUNT(*) AS metric_value
+FROM ${ref("fact_es_distinct_user_hit")} duh
+LEFT JOIN ${ref("dim_institution")} inst ON duh.institution_id = inst.institution_id
+GROUP BY 1,2,3,4,5,6,7,8
+),
+
+-- === InfluxDB Metrics (direct from source - already aggregated) ===
+influx_metrics AS (
+  -- Metric 4: Distinct Hits (current focus)
+  SELECT
+    f.full_date,
+    2 AS service_id,  -- RCTSAAI
+    COALESCE(inst.institution_id, -1) AS institution_id,
+    CAST(NULL AS INT64) AS radius_id,
+    CAST(NULL AS INT64) AS nas_id,
+    COALESCE(idp.idp_id, -1) AS idp_id, 
+    COALESCE(sp.sp_id, -1) AS sp_id,
+    4 AS metric_id,  -- Distinct user hit count
+    f.count_distinct_user_id AS metric_value
+  FROM ${ref("fetched-influx-logs")} f
+  LEFT JOIN ${ref("dim_identityprovider")} idp 
+    ON f.idp_id = idp.idp
+  LEFT JOIN ${ref("dim_serviceprovider")} sp 
+    ON f.sp_id = sp.sp  
+  LEFT JOIN ${ref("dim_institution")} inst 
+    ON idp.idp_id = inst.idp_id
+
+
+UNION ALL
+-- Metric 1: Total Hits (use count_user_id)
+SELECT
+  f.full_date, 2 AS service_id, 
+  COALESCE(inst.institution_id, -1) AS institution_id,
+  CAST(NULL AS INT64) AS radius_id, CAST(NULL AS INT64) AS nas_id,
+  COALESCE(idp.idp_id, -1) AS idp_id, COALESCE(sp.sp_id, -1) AS sp_id,
+  1 AS metric_id,
+  f.count_user_id AS metric_value
+FROM ${ref("fetched-influx-logs")} f
+LEFT JOIN ${ref("dim_identityprovider")} idp ON f.idp_id = idp.idp
+LEFT JOIN ${ref("dim_serviceprovider")} sp ON f.sp_id = sp.sp  
+LEFT JOIN ${ref("dim_institution")} inst ON idp.idp_id = inst.idp_id
+),
+
+-- === Combined Metrics ===
+all_metrics AS (
+  SELECT * FROM es_metrics
+  UNION ALL  
+  SELECT * FROM influx_metrics
+)
+
+SELECT
+  full_date,
+  service_id,
+  institution_id,
+  radius_id, 
+  nas_id,
+  idp_id,
+  sp_id,
+  metric_id,
+  CAST(metric_value AS FLOAT64) AS metric_value
+FROM all_metrics
+WHERE metric_value > 0  -- Filter out zero counts
