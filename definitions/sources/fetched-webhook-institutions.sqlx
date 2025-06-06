@@ -1,7 +1,8 @@
 config {
     type: "view",
     name: "fetched-webhook-institutions",
-    description: "A view containing the institutions extracted from webhook - one row per institution."
+    description: "A view containing the institutions extracted from webhook - one row per institution.",
+    tags: ["webhook"]
 }
 WITH deduplicated AS (
     SELECT DISTINCT

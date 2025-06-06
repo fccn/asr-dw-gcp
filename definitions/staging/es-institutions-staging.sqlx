@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "es-institutions-staging",
-  description: "Extract institution data from ES logs."
+  description: "Extract institution data from ES logs.",
+  tags: ["eduroam"]
 }
 SELECT DISTINCT
   domain AS realm,

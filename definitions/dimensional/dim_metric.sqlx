@@ -2,7 +2,8 @@ config {
   type: "table",
   name: "dim_metric",
   schema: "data_warehouse", 
-  description: "Metric dimension with predefined metrics."
+  description: "Metric dimension with predefined metrics.",
+  tags:["eduroam", "rctsaai"]
 }
 SELECT * FROM (
   SELECT 1 AS metric_id, 'total hits' AS name, 'count' AS units

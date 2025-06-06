@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "influx-idp-staging",
-  description: "Extract IDP data from InfluxDB logs."
+  description: "Extract IDP data from InfluxDB logs.",
+  tags: ["rctsaai"]
 }
 SELECT DISTINCT 
   idp_id AS idp,

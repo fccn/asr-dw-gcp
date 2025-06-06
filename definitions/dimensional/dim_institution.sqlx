@@ -2,7 +2,8 @@ config {
   type: "table",
   name: "dim_institution",
   schema: "data_warehouse",
-  description: "Institution dimension from webhook reference data."
+  description: "Institution dimension from webhook reference data.",
+  tags: ["eduroam"]
 }
 WITH webhook_with_idp AS (
   SELECT

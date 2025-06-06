@@ -6,7 +6,8 @@ config {
   bigquery: {
     partitionBy: "full_date",
     clusterBy: ["auth_status", "institution_id"]
-  }
+  },
+  tags: ["eduroam"]
 }
 SELECT
   src.full_date,

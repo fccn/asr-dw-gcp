@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "es-radius-staging", 
-  description: "Extract RADIUS data from ES logs for dim_radius."
+  description: "Extract RADIUS data from ES logs for dim_radius.",
+  tags: ["eduroam"]
 }
 SELECT DISTINCT
   radius,

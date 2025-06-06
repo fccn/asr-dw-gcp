@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "es-date-staging",
-  description: "Extract dates from ES logs for dim_date."
+  description: "Extract dates from ES logs for dim_date.",
+  tags: ["eduroam"]
 }
 SELECT DISTINCT
   full_date,

@@ -1,7 +1,8 @@
 config {
   type: "view",
   materialized: true,
-  name: "fetched-es-logs"
+  name: "fetched-es-logs",
+  tags: ["eduroam"]
 }
 SELECT
   DATE(timestamp) AS full_date,

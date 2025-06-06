@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "influx-sp-staging",
-  description: "Extract SP data from InfluxDB logs."
+  description: "Extract SP data from InfluxDB logs.",
+  tags: ["rctsaai"]
 }
 SELECT DISTINCT 
   sp_id AS sp

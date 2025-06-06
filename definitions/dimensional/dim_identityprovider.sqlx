@@ -2,7 +2,8 @@ config {
   type: "table",
   name: "dim_identityprovider",
   schema: "data_warehouse",
-  description: "Identity Provider dimension combining webhook and log sources."
+  description: "Identity Provider dimension combining webhook and log sources.",
+  tags: ["rctsaai"]
 }
 WITH all_idps AS (
   -- From webhook (authoritative source)

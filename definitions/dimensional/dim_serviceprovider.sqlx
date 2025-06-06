@@ -2,7 +2,8 @@ config {
   type: "table", 
   name: "dim_serviceprovider",
   schema: "data_warehouse",
-  description: "Service Provider dimension from InfluxDB only."
+  description: "Service Provider dimension from InfluxDB only.",
+  tags: ["rctsaai"]
 }
 WITH with_ids AS (
   SELECT

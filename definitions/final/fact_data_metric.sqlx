@@ -6,7 +6,8 @@ config {
   bigquery: {
     partitionBy: "full_date",
     clusterBy: ["service_id", "metric_id"]
-  }
+  },
+  tags: ["rctsaai", "eduroam"]
 }
 -- === Elasticsearch Metrics (via intermediate table) ===
 WITH es_metrics AS (

@@ -2,7 +2,8 @@ config {
   type: "table",
   name: "dim_date",
   schema: "data_warehouse",
-  description: "Date dimension."
+  description: "Date dimension.",
+  tags: ["eduroam", "rctsaai"]
 }
 SELECT
   full_date,

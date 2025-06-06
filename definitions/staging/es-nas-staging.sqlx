@@ -1,7 +1,8 @@
 config {
   type: "view", 
   name: "es-nas-staging",
-  description: "Extract NAS data from ES logs for dim_nas."
+  description: "Extract NAS data from ES logs for dim_nas.",
+  tags: ["eduroam"]
 }
 SELECT DISTINCT
   nas,

@@ -1,7 +1,8 @@
 config {
   type: "view",
   name: "selected-metrics",
-  description: "View of selected metrics for the project - currently focused on metric 4."
+  description: "View of selected metrics for the project - currently focused on metric 4.",
+  tags: ["eduroam", "rctsaai"]
 }
 SELECT
   metric_id,
