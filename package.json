@@ -1,0 +1,6 @@
+{
+  "name": "eduroam_rctsaai",
+  "dependencies": {
+    "@dataform/core": "3.0.0"
+  }
+}
