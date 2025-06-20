@@ -1,15 +1,14 @@
-{{
-  config(
-    materialized='incremental',
-    on_schema_change='fail',
-    partition_by={
-      "field": "full_date",
-      "data_type": "date"
-    },
-    cluster_by=["service_id", "metric_id"],
-    tags=["rctsaai", "eduroam"]
-  )
-}}
+config {
+  type: "incremental",
+  schema: "data_warehouse",
+  name: "fact_data_metric",
+  description: "Final metrics table - ES via intermediate table, InfluxDB direct.",
+  bigquery: {
+    partitionBy: "full_date",
+    clusterBy: ["service_id", "metric_id"]
+  },
+  tags: ["rctsaai", "eduroam"]
+}
 
 -- === Elasticsearch Metrics (via intermediate table) ===
 WITH es_metrics AS (
@@ -24,14 +23,12 @@ WITH es_metrics AS (
     CAST(NULL AS INT64) AS sp_id,
     4 AS metric_id,
     COUNT(DISTINCT duh.user_hash) AS metric_value
-  FROM {{ ref("fact_es_distinct_user_hit") }} duh
-  LEFT JOIN {{ ref("dim_institution") }} inst 
+  FROM ${ref("fact_es_distinct_user_hit")} duh
+  LEFT JOIN ${ref("dim_institution")} inst 
     ON duh.institution_id = inst.institution_id
-  {% if is_incremental() %}
-    WHERE duh.full_date > (SELECT MAX(full_date) FROM {{ this }})
-  {% endif %}
+  ${ when(incremental(), `WHERE duh.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
   GROUP BY 1,2,3,4,5,6,7,8
-
+  
   UNION ALL
   -- Metric 1: Total Hits
   SELECT
@@ -39,11 +36,9 @@ WITH es_metrics AS (
     COALESCE(inst.idp_id, -1) AS idp_id, CAST(NULL AS INT64) AS sp_id,
     1 AS metric_id,
     COUNT(*) AS metric_value
-  FROM {{ ref("fact_es_distinct_user_hit") }} duh
-  LEFT JOIN {{ ref("dim_institution") }} inst ON duh.institution_id = inst.institution_id
-  {% if is_incremental() %}
-    WHERE duh.full_date > (SELECT MAX(full_date) FROM {{ this }})
-  {% endif %}
+  FROM ${ref("fact_es_distinct_user_hit")} duh
+  LEFT JOIN ${ref("dim_institution")} inst ON duh.institution_id = inst.institution_id
+  ${ when(incremental(), `WHERE duh.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
   GROUP BY 1,2,3,4,5,6,7,8
 ),
 
@@ -60,16 +55,14 @@ influx_metrics AS (
     COALESCE(sp.sp_id, -1) AS sp_id,
     4 AS metric_id,
     f.count_distinct_user_id AS metric_value
-  FROM {{ ref("fetched-influx-logs") }} f
-  LEFT JOIN {{ ref("dim_identityprovider") }} idp 
+  FROM ${ref("fetched-influx-logs")} f
+  LEFT JOIN ${ref("dim_identityprovider")} idp 
     ON f.idp_id = idp.idp
-  LEFT JOIN {{ ref("dim_serviceprovider") }} sp 
+  LEFT JOIN ${ref("dim_serviceprovider")} sp 
     ON f.sp_id = sp.sp  
-  LEFT JOIN {{ ref("dim_institution") }} inst 
+  LEFT JOIN ${ref("dim_institution")} inst 
     ON idp.idp_id = inst.idp_id
-  {% if is_incremental() %}
-    WHERE f.full_date > (SELECT MAX(full_date) FROM {{ this }})
-  {% endif %}
+  ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
 
   UNION ALL
   -- Metric 1: Total Hits
@@ -80,13 +73,11 @@ influx_metrics AS (
     COALESCE(idp.idp_id, -1) AS idp_id, COALESCE(sp.sp_id, -1) AS sp_id,
     1 AS metric_id,
     f.count_user_id AS metric_value
-  FROM {{ ref("fetched-influx-logs") }} f
-  LEFT JOIN {{ ref("dim_identityprovider") }} idp ON f.idp_id = idp.idp
-  LEFT JOIN {{ ref("dim_serviceprovider") }} sp ON f.sp_id = sp.sp  
-  LEFT JOIN {{ ref("dim_institution") }} inst ON idp.idp_id = inst.idp_id
-  {% if is_incremental() %}
-    WHERE f.full_date > (SELECT MAX(full_date) FROM {{ this }})
-  {% endif %}
+  FROM ${ref("fetched-influx-logs")} f
+  LEFT JOIN ${ref("dim_identityprovider")} idp ON f.idp_id = idp.idp
+  LEFT JOIN ${ref("dim_serviceprovider")} sp ON f.sp_id = sp.sp  
+  LEFT JOIN ${ref("dim_institution")} inst ON idp.idp_id = inst.idp_id
+  ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
 ),
 
 -- === Combined Metrics ===
