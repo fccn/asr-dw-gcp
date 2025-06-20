@@ -15,7 +15,7 @@ SELECT
   COALESCE(radius_dim.radius_id, -1) AS radius_id,
   COALESCE(nas_dim.nas_id, -1) AS nas_id,
   src.user_hash,
-  src.auth_status  -- Keep all statuses for future metrics
+  src.auth_status
   
 FROM ${ref("fetched-es-logs")} src
 LEFT JOIN ${ref("dim_institution")} institution 
@@ -24,4 +24,3 @@ LEFT JOIN ${ref("dim_radius")} radius_dim
   ON src.radius = radius_dim.radius  
 LEFT JOIN ${ref("dim_nas")} nas_dim 
   ON src.nas = nas_dim.nas
--- Note: Not filtering by auth_status here to preserve all data for future metrics

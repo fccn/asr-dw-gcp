@@ -10,10 +10,10 @@ SELECT
   units
 FROM ${ref("dim_metric")}
 WHERE name IN (
-  'distinct hits',  -- Currently implemented (metric 4)
-  'total hits' -- Currently implemented (metric 1)
+  'distinct hits',  -- implemented (metric 4)
+  'total hits' -- implemented (metric 1)
 
-  -- Future metrics to enable:
+  -- Future metrics:
   -- ,'total ok hits' 
   -- ,'total fail hits'
   -- ,'distinct ok hits'

@@ -6,7 +6,7 @@ config {
   tags: ["rctsaai"]
 }
 WITH all_idps AS (
-  -- From webhook (authoritative source)
+  -- From webhook
   SELECT DISTINCT 
     idp, 
     COALESCE(status, 'unknown') AS status

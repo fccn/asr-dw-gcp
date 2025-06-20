@@ -6,10 +6,10 @@ config {
 }
 SELECT DISTINCT
   domain AS realm,
-  domain AS codename,  -- Use domain as codename
+  domain AS codename,
   'From ES logs' AS description,
-  FALSE AS member,  -- Default to false for ES-discovered institutions
-  domain AS idp_identifier  -- Will map to dim_identityprovider.idp later
+  FALSE AS member,
+  domain AS idp_identifier
 FROM ${ref("fetched-es-logs")}
 WHERE domain IS NOT NULL 
   AND auth_status = 'OK'

@@ -14,7 +14,6 @@ SELECT
   week,
   weekday
 FROM ${ref("es-date-staging")}
--- Add InfluxDB dates if they have different date ranges
 UNION DISTINCT
 SELECT DISTINCT
   full_date,

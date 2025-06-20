@@ -10,8 +10,8 @@ WITH webhook_with_idp AS (
     whi.codename,  -- Keep original codename from webhook
     COALESCE(whi.description, 'Institution') AS description,
     whi.realm,
-    COALESCE(whi.member, FALSE) AS member,  -- Boolean field
-    idp.idp_id  -- Reference to dim_identityprovider.idp_id
+    COALESCE(whi.member, FALSE) AS member,
+    idp.idp_id
   FROM ${ref("fetched-webhook-institutions")} whi
   LEFT JOIN ${ref("dim_identityprovider")} idp 
     ON whi.idp = idp.idp

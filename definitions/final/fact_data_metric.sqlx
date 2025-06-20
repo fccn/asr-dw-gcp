@@ -18,7 +18,7 @@ WITH es_metrics AS (
     duh.institution_id,
     duh.radius_id,
     duh.nas_id,
-    COALESCE(inst.idp_id, -1) AS idp_id,  -- Get IDP from institution
+    COALESCE(inst.idp_id, -1) AS idp_id,
     CAST(NULL AS INT64) AS sp_id,
     4 AS metric_id,
     COUNT(DISTINCT duh.user_hash) AS metric_value
@@ -40,9 +40,9 @@ LEFT JOIN ${ref("dim_institution")} inst ON duh.institution_id = inst.institutio
 GROUP BY 1,2,3,4,5,6,7,8
 ),
 
--- === InfluxDB Metrics (direct from source - already aggregated) ===
+-- === InfluxDB Metrics (already aggregated) ===
 influx_metrics AS (
-  -- Metric 4: Distinct Hits (current focus)
+  -- Metric 4: Distinct Hits
   SELECT
     f.full_date,
     2 AS service_id,  -- RCTSAAI
@@ -51,7 +51,7 @@ influx_metrics AS (
     CAST(NULL AS INT64) AS nas_id,
     COALESCE(idp.idp_id, -1) AS idp_id, 
     COALESCE(sp.sp_id, -1) AS sp_id,
-    4 AS metric_id,  -- Distinct user hit count
+    4 AS metric_id,
     f.count_distinct_user_id AS metric_value
   FROM ${ref("fetched-influx-logs")} f
   LEFT JOIN ${ref("dim_identityprovider")} idp 
@@ -63,7 +63,7 @@ influx_metrics AS (
 
 
 UNION ALL
--- Metric 1: Total Hits (use count_user_id)
+-- Metric 1: Total Hits
 SELECT
   f.full_date, 2 AS service_id, 
   COALESCE(inst.institution_id, -1) AS institution_id,
@@ -95,4 +95,4 @@ SELECT
   metric_id,
   CAST(metric_value AS FLOAT64) AS metric_value
 FROM all_metrics
-WHERE metric_value > 0  -- Filter out zero counts
+WHERE metric_value > 0
