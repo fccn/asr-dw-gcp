@@ -1,8 +1,8 @@
 config {
     type: "view",
-    name: "fetched-webhook-institutions",
-    description: "A view containing the institutions extracted from webhook - one row per institution.",
-    tags: ["webhook"]
+    name: "fetched-webhook-eduroam",
+    description: "Eduroam institutions from reliable webhook staging data.",
+    tags: ["webhook", "eduroam"]
 }
 WITH deduplicated AS (
     SELECT DISTINCT
@@ -10,13 +10,11 @@ WITH deduplicated AS (
         CI1_descricao AS description,
         CI1_org AS org,
         CI1_membro as member,
-        IDP_Entity_IDs as idp,
-        IDP_status as status,
-        -- Take the first realm for each institution (or concatenate all realms)
+        NULL as idp,  -- Eduroam doesn't have direct IDP mapping like the old webhook
+        CI1_status as status,
         STRING_AGG(DISTINCT Radius_Realms, '; ' ORDER BY Radius_Realms) as realm
-    FROM ${ref("webhook_info")}
+    FROM ${ref("webhook_eduroam_info")}
     WHERE CI1_codename IS NOT NULL
-      AND IDP_Entity_IDs IS NOT NULL
     GROUP BY 1,2,3,4,5,6
 ),
 ranked AS (

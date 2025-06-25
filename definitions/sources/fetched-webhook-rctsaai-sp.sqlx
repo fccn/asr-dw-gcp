@@ -1,0 +1,24 @@
+config {
+    type: "view",
+    name: "fetched-webhook-rctsaai-sp",
+    description: "RCTSAAI SPs from reliable webhook staging data.",
+    tags: ["webhook", "rctsaai", "sp"]
+}
+SELECT
+    org_codename as institution_codename,
+    org_description as institution_description,
+    org_status as institution_status,
+    org_date_activated as institution_date_activated,
+    sp_entity_id as sp,
+    sp_codename as sp_codename,
+    sp_users as sp_users,
+    sp_integration_type as sp_integration_type,
+    sp_edugain as sp_edugain,
+    sp_via_proxy as sp_via_proxy,
+    sp_qualidade as sp_qualidade,
+    sp_esi as sp_esi,
+    sp_research_and_scholarship_v1 as sp_research_scholarship,
+    sp_active as sp_status,
+    sp_date_activated as sp_date_activated
+FROM ${ref("webhook_rctsaai_sp_info")}
+WHERE sp_entity_id IS NOT NULL

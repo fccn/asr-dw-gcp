@@ -1,0 +1,16 @@
+config {
+  type: "view",
+  materialized: true,
+  name: "fetched-ciencia-id-logs",
+  description: "Materialized view with daily stats from CIÊNCIA-ID API",
+  tags: ["ciencia-id"]
+}
+SELECT
+  timestamp AS full_date,
+  idp_id,
+  sp_id,
+  count_user_id,
+  count_distinct_user_id
+FROM ${ref("cidapi_stats")}
+WHERE idp_id IS NOT NULL
+  AND sp_id IS NOT NULL

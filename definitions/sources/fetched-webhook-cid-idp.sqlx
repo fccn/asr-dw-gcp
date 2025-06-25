@@ -1,0 +1,21 @@
+config {
+    type: "view",
+    name: "fetched-webhook-cid-idp",
+    description: "CIÊNCIA-ID IDPs from reliable webhook staging data.",
+    tags: ["webhook", "ciencia-id", "idp"]
+}
+SELECT
+    org_codename as institution_codename,
+    org_description as institution_description,
+    org_status as institution_status,
+    org_date_activated as institution_date_activated,
+    idp_entity_id as idp,
+    idp_codename as idp_codename,
+    idp_description as idp_description,
+    idp_software as idp_software,
+    idp_domain as idp_domain,
+    idp_edugain as idp_edugain,
+    idp_active as idp_status,
+    idp_date_activated as idp_date_activated
+FROM ${ref("webhook_cid_idp_info")}
+WHERE idp_entity_id IS NOT NULL
