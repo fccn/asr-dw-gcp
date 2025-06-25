@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "datawarehouseasr",
+  schema: "staging",
+  name: "webhook_cid_idp_info",
+  description: "Declaration for cienciaid webhook idp staging table."
+}
