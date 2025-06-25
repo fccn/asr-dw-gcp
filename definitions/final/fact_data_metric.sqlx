@@ -2,12 +2,12 @@ config {
   type: "incremental",
   schema: "data_warehouse",
   name: "fact_data_metric",
-  description: "Final metrics table - ES via intermediate table, InfluxDB direct.",
+  description: "Final metrics table - ES via intermediate, InfluxDB + CIÊNCIA-ID direct.",
   bigquery: {
     partitionBy: "full_date",
     clusterBy: ["service_id", "metric_id"]
   },
-  tags: ["rctsaai", "eduroam"]
+  tags: ["eduroam", "rctsaai", "cid"]
 }
 
 -- === Elasticsearch Metrics (via intermediate table) ===
@@ -19,64 +19,131 @@ WITH es_metrics AS (
     duh.institution_id,
     duh.radius_id,
     duh.nas_id,
-    COALESCE(inst.idp_id, -1) AS idp_id,
-    CAST(NULL AS INT64) AS sp_id,
+    CAST(-1 AS INT64) AS idp_id,  -- Eduroam doesn't have IDPs in logs
+    CAST(-1 AS INT64) AS sp_id,   -- Eduroam doesn't have SPs in logs
     4 AS metric_id,
     COUNT(DISTINCT duh.user_hash) AS metric_value
   FROM ${ref("fact_es_distinct_user_hit")} duh
-  LEFT JOIN ${ref("dim_institution")} inst 
-    ON duh.institution_id = inst.institution_id
   ${ when(incremental(), `WHERE duh.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
   GROUP BY 1,2,3,4,5,6,7,8
   
   UNION ALL
+  
   -- Metric 1: Total Hits
   SELECT
-    duh.full_date, 1 AS service_id, duh.institution_id, duh.radius_id, duh.nas_id,
-    COALESCE(inst.idp_id, -1) AS idp_id, CAST(NULL AS INT64) AS sp_id,
+    duh.full_date,
+    1 AS service_id,  -- Eduroam
+    duh.institution_id,
+    duh.radius_id,
+    duh.nas_id,
+    CAST(-1 AS INT64) AS idp_id,
+    CAST(-1 AS INT64) AS sp_id,
     1 AS metric_id,
     COUNT(*) AS metric_value
   FROM ${ref("fact_es_distinct_user_hit")} duh
-  LEFT JOIN ${ref("dim_institution")} inst ON duh.institution_id = inst.institution_id
   ${ when(incremental(), `WHERE duh.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
   GROUP BY 1,2,3,4,5,6,7,8
 ),
 
--- === InfluxDB Metrics (already aggregated) ===
-influx_metrics AS (
+-- === RCTSAAI Metrics (pre-aggregated from InfluxDB) ===
+rctsaai_metrics AS (
   -- Metric 4: Distinct Hits
   SELECT
     f.full_date,
     2 AS service_id,  -- RCTSAAI
-    COALESCE(inst.institution_id, -1) AS institution_id,
-    CAST(NULL AS INT64) AS radius_id,
-    CAST(NULL AS INT64) AS nas_id,
-    COALESCE(idp.idp_id, -1) AS idp_id, 
-    COALESCE(sp.sp_id, -1) AS sp_id,
+    COALESCE(institution.institution_id, -1) AS institution_id,
+    CAST(-1 AS INT64) AS radius_id,  -- RCTSAAI doesn't have RADIUS
+    CAST(-1 AS INT64) AS nas_id,     -- RCTSAAI doesn't have NAS
+    COALESCE(idp_dim.idp_id, -1) AS idp_id,
+    COALESCE(sp_dim.sp_id, -1) AS sp_id,
     4 AS metric_id,
     f.count_distinct_user_id AS metric_value
   FROM ${ref("fetched-influx-logs")} f
-  LEFT JOIN ${ref("dim_identityprovider")} idp 
-    ON f.idp_id = idp.idp
-  LEFT JOIN ${ref("dim_serviceprovider")} sp 
-    ON f.sp_id = sp.sp  
-  LEFT JOIN ${ref("dim_institution")} inst 
-    ON idp.idp_id = inst.idp_id
+  LEFT JOIN ${ref("dim_identityprovider")} idp_dim 
+    ON f.idp_id = idp_dim.idp 
+    AND idp_dim.service_id = 2  -- RCTSAAI service
+  LEFT JOIN ${ref("dim_serviceprovider")} sp_dim 
+    ON f.sp_id = sp_dim.sp 
+    AND sp_dim.service_id = 2   -- RCTSAAI service
+  LEFT JOIN ${ref("dim_institution")} institution 
+    ON idp_dim.institution_codename = institution.codename
+    AND institution.service_id = 2  -- RCTSAAI institutions
   ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
-
+  
   UNION ALL
+  
   -- Metric 1: Total Hits
   SELECT
-    f.full_date, 2 AS service_id, 
-    COALESCE(inst.institution_id, -1) AS institution_id,
-    CAST(NULL AS INT64) AS radius_id, CAST(NULL AS INT64) AS nas_id,
-    COALESCE(idp.idp_id, -1) AS idp_id, COALESCE(sp.sp_id, -1) AS sp_id,
+    f.full_date,
+    2 AS service_id,  -- RCTSAAI
+    COALESCE(institution.institution_id, -1) AS institution_id,
+    CAST(-1 AS INT64) AS radius_id,
+    CAST(-1 AS INT64) AS nas_id,
+    COALESCE(idp_dim.idp_id, -1) AS idp_id,
+    COALESCE(sp_dim.sp_id, -1) AS sp_id,
     1 AS metric_id,
     f.count_user_id AS metric_value
   FROM ${ref("fetched-influx-logs")} f
-  LEFT JOIN ${ref("dim_identityprovider")} idp ON f.idp_id = idp.idp
-  LEFT JOIN ${ref("dim_serviceprovider")} sp ON f.sp_id = sp.sp  
-  LEFT JOIN ${ref("dim_institution")} inst ON idp.idp_id = inst.idp_id
+  LEFT JOIN ${ref("dim_identityprovider")} idp_dim 
+    ON f.idp_id = idp_dim.idp 
+    AND idp_dim.service_id = 2
+  LEFT JOIN ${ref("dim_serviceprovider")} sp_dim 
+    ON f.sp_id = sp_dim.sp 
+    AND sp_dim.service_id = 2
+  LEFT JOIN ${ref("dim_institution")} institution 
+    ON idp_dim.institution_codename = institution.codename
+    AND institution.service_id = 2
+  ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
+),
+
+-- === CIÊNCIA-ID Metrics (pre-aggregated from API) ===
+ciencia_id_metrics AS (
+  -- Metric 4: Distinct Hits
+  SELECT
+    f.full_date,
+    3 AS service_id,  -- CIÊNCIA-ID
+    COALESCE(institution.institution_id, -1) AS institution_id,
+    CAST(-1 AS INT64) AS radius_id,  -- CIÊNCIA-ID doesn't have RADIUS
+    CAST(-1 AS INT64) AS nas_id,     -- CIÊNCIA-ID doesn't have NAS
+    COALESCE(idp_dim.idp_id, -1) AS idp_id,
+    COALESCE(sp_dim.sp_id, -1) AS sp_id,
+    4 AS metric_id,
+    f.count_distinct_user_id AS metric_value
+  FROM ${ref("fetched-ciencia-id-logs")} f
+  LEFT JOIN ${ref("dim_identityprovider")} idp_dim 
+    ON f.idp_id = idp_dim.idp 
+    AND idp_dim.service_id = 3  -- CIÊNCIA-ID service
+  LEFT JOIN ${ref("dim_serviceprovider")} sp_dim 
+    ON f.sp_id = sp_dim.sp 
+    AND sp_dim.service_id = 3   -- CIÊNCIA-ID service
+  LEFT JOIN ${ref("dim_institution")} institution 
+    ON idp_dim.institution_codename = institution.codename
+    AND institution.service_id = 3  -- CIÊNCIA-ID institutions
+  ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
+  
+  UNION ALL
+  
+  -- Metric 1: Total Hits
+  SELECT
+    f.full_date,
+    3 AS service_id,  -- CIÊNCIA-ID
+    COALESCE(institution.institution_id, -1) AS institution_id,
+    CAST(-1 AS INT64) AS radius_id,
+    CAST(-1 AS INT64) AS nas_id,
+    COALESCE(idp_dim.idp_id, -1) AS idp_id,
+    COALESCE(sp_dim.sp_id, -1) AS sp_id,
+    1 AS metric_id,
+    f.count_user_id AS metric_value
+  FROM ${ref("fetched-ciencia-id-logs")} f
+  LEFT JOIN ${ref("dim_identityprovider")} idp_dim 
+    ON f.idp_id = idp_dim.idp 
+    AND idp_dim.service_id = 3
+  LEFT JOIN ${ref("dim_serviceprovider")} sp_dim 
+    ON f.sp_id = sp_dim.sp 
+    AND sp_dim.service_id = 3
+  LEFT JOIN ${ref("dim_institution")} institution 
+    ON idp_dim.institution_codename = institution.codename
+    AND institution.service_id = 3
   ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
 ),
 
@@ -84,7 +151,9 @@ influx_metrics AS (
 all_metrics AS (
   SELECT * FROM es_metrics
   UNION ALL  
-  SELECT * FROM influx_metrics
+  SELECT * FROM rctsaai_metrics
+  UNION ALL
+  SELECT * FROM ciencia_id_metrics
 )
 
 SELECT
@@ -99,3 +168,4 @@ SELECT
   CAST(metric_value AS FLOAT64) AS metric_value
 FROM all_metrics
 WHERE metric_value > 0
+  AND institution_id != -1

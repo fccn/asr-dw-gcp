@@ -2,42 +2,73 @@ config {
   type: "table",
   name: "dim_identityprovider",
   schema: "data_warehouse",
-  description: "Identity Provider dimension combining webhook and log sources.",
-  tags: ["rctsaai"]
+  description: "IDP dimension from RCTSAAI and CIÊNCIA-ID with service separation.",
+  bigquery: {
+    clusterBy: ["service_id"]
+  },
+  tags: ["rctsaai", "cid"]
 }
+
 WITH all_idps AS (
-  -- From webhook
-  SELECT DISTINCT 
-    idp, 
-    COALESCE(status, 'unknown') AS status
-  FROM ${ref("fetched-webhook-institutions")}
-  WHERE idp IS NOT NULL
-  
-  UNION DISTINCT
-  
-  -- From influx logs
-  SELECT DISTINCT 
+  -- RCTSAAI IDPs
+  SELECT
     idp,
-    status 
-  FROM ${ref("influx-idp-staging")}
+    idp_codename,
+    idp_description,
+    idp_software,
+    idp_domain,
+    CASE WHEN idp_edugain IN ('1', 'Sim', 'TRUE') THEN TRUE ELSE FALSE END as edugain_enabled,
+    CASE WHEN idp_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    idp_date_activated as date_activated,
+    institution_codename,
+    2 as service_id,
+    'rctsaai' as service_name
+  FROM ${ref("fetched-webhook-rctsaai-idp")}
   
-  UNION DISTINCT
+  UNION ALL
   
-  -- From ES logs
-  SELECT DISTINCT
-    idp_identifier AS idp,
-    'unknown' AS status
-  FROM ${ref("es-institutions-staging")}
+  -- CIÊNCIA-ID IDPs  
+  SELECT
+    idp,
+    idp_codename,
+    idp_description,
+    idp_software,
+    idp_domain,
+    CASE WHEN idp_edugain IN ('1', 'Sim', 'TRUE') THEN TRUE ELSE FALSE END as edugain_enabled,
+    CASE WHEN idp_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    idp_date_activated as date_activated,
+    institution_codename,
+    3 as service_id,
+    'ciencia_id' as service_name
+  FROM ${ref("fetched-webhook-cid-idp")}
 ),
 with_ids AS (
   SELECT
     idp,
-    status,
-    ROW_NUMBER() OVER (ORDER BY idp) AS idp_id
+    idp_codename,
+    idp_description,
+    idp_software,
+    idp_domain,
+    edugain_enabled,
+    active,
+    date_activated,
+    institution_codename,
+    service_id,
+    service_name,
+    ROW_NUMBER() OVER (ORDER BY service_id, idp) AS idp_id
   FROM all_idps
 )
-SELECT 
+SELECT
   idp_id,
-  idp, 
-  status
+  idp,
+  service_id,
+  idp_codename,
+  idp_description,
+  idp_software,
+  idp_domain,
+  edugain_enabled,
+  active,
+  date_activated,
+  institution_codename,
+  service_name
 FROM with_ids

@@ -1,17 +1,86 @@
 config {
-  type: "table", 
+  type: "table",
   name: "dim_serviceprovider",
   schema: "data_warehouse",
-  description: "Service Provider dimension from InfluxDB only.",
-  tags: ["rctsaai"]
+  description: "SP dimension from RCTSAAI and CIÊNCIA-ID with service separation.",
+  bigquery: {
+    clusterBy: ["service_id"]
+  },
+  tags: ["rctsaai", "cid"]
 }
-WITH with_ids AS (
+
+WITH all_sps AS (
+  -- RCTSAAI SPs
   SELECT
     sp,
-    ROW_NUMBER() OVER (ORDER BY sp) AS sp_id
-  FROM ${ref("influx-sp-staging")}
+    sp_codename,
+    sp_users,
+    sp_integration_type,
+    CASE WHEN sp_edugain IN ('1', 'Sim', 'TRUE') THEN TRUE ELSE FALSE END as edugain_enabled,
+    sp_via_proxy,
+    sp_qualidade as quality_profile,
+    sp_esi as esi_enabled,
+    sp_research_scholarship,
+    CASE WHEN sp_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    sp_date_activated as date_activated,
+    institution_codename,
+    2 as service_id,
+    'rctsaai' as service_name
+  FROM ${ref("fetched-webhook-rctsaai-sp")}
+  
+  UNION ALL
+  
+  -- CIÊNCIA-ID SPs  
+  SELECT
+    sp,
+    sp_codename,
+    sp_users,
+    sp_integration_type,
+    CASE WHEN sp_edugain IN ('1', 'Sim', 'TRUE') THEN TRUE ELSE FALSE END as edugain_enabled,
+    sp_via_proxy,
+    sp_qualidade as quality_profile,
+    sp_esi as esi_enabled,
+    sp_research_scholarship,
+    CASE WHEN sp_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    sp_date_activated as date_activated,
+    institution_codename,
+    3 as service_id,
+    'ciencia_id' as service_name
+  FROM ${ref("fetched-webhook-cid-sp")}
+),
+with_ids AS (
+  SELECT
+    sp,
+    sp_codename,
+    sp_users,
+    sp_integration_type,
+    edugain_enabled,
+    sp_via_proxy,
+    quality_profile,
+    esi_enabled,
+    sp_research_scholarship,
+    active,
+    date_activated,
+    institution_codename,
+    service_id,
+    service_name,
+    ROW_NUMBER() OVER (ORDER BY service_id, sp) AS sp_id
+  FROM all_sps
 )
 SELECT
   sp_id,
-  sp
+  sp,
+  service_id,
+  sp_codename,
+  sp_users,
+  sp_integration_type,
+  edugain_enabled,
+  sp_via_proxy,
+  quality_profile,
+  esi_enabled,
+  sp_research_scholarship,
+  active,
+  date_activated,
+  institution_codename,
+  service_name
 FROM with_ids

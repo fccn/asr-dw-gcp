@@ -2,16 +2,33 @@ config {
   type: "table",
   name: "dim_nas",
   schema: "data_warehouse", 
-  description: "NAS dimension from Elasticsearch data.",
+  description: "NAS dimension from Elasticsearch data - deduplicated.",
   tags: ["eduroam"]
 }
-WITH with_ids AS (
+WITH unique_nas AS (
+  SELECT DISTINCT
+    nas,
+    COALESCE(nas_country, 'Unknown') AS country,
+    COALESCE(nas_region, 'Unknown') AS region
+  FROM ${ref("fetched-es-logs")}
+  WHERE nas IS NOT NULL
+),
+deduplicated_nas AS (
+  SELECT 
+    nas,
+    -- If same NAS has different country/region, pick the first non-null one
+    ARRAY_AGG(country IGNORE NULLS ORDER BY country)[SAFE_OFFSET(0)] as country,
+    ARRAY_AGG(region IGNORE NULLS ORDER BY region)[SAFE_OFFSET(0)] as region
+  FROM unique_nas
+  GROUP BY nas
+),
+with_ids AS (
   SELECT
     nas,
-    country,
-    region,
+    COALESCE(country, 'Unknown') as country,
+    COALESCE(region, 'Unknown') as region,
     ROW_NUMBER() OVER (ORDER BY nas) AS nas_id
-  FROM ${ref("es-nas-staging")}
+  FROM deduplicated_nas
 )
 SELECT
   nas_id,

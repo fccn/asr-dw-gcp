@@ -3,7 +3,7 @@ config {
   materialized: true,
   name: "fetched-ciencia-id-logs",
   description: "Materialized view with daily stats from CIÊNCIA-ID API",
-  tags: ["ciencia-id"]
+  tags: ["cid"]
 }
 SELECT
   timestamp AS full_date,

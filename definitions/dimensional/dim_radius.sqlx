@@ -2,16 +2,33 @@ config {
   type: "table",
   name: "dim_radius",
   schema: "data_warehouse",
-  description: "RADIUS dimension from Elasticsearch data.",
+  description: "RADIUS dimension from Elasticsearch data - deduplicated.",
   tags: ["eduroam"]
 }
-WITH with_ids AS (
+WITH unique_radius AS (
+  SELECT DISTINCT
+    radius,
+    COALESCE(radius_country, 'Unknown') AS country,
+    COALESCE(radius_region, 'Unknown') AS region
+  FROM ${ref("fetched-es-logs")}
+  WHERE radius IS NOT NULL
+),
+deduplicated_radius AS (
+  SELECT 
+    radius,
+    -- If same RADIUS has different country/region, pick the first non-null one
+    ARRAY_AGG(country IGNORE NULLS ORDER BY country)[SAFE_OFFSET(0)] as country,
+    ARRAY_AGG(region IGNORE NULLS ORDER BY region)[SAFE_OFFSET(0)] as region
+  FROM unique_radius
+  GROUP BY radius
+),
+with_ids AS (
   SELECT
     radius,
-    country,
-    region,
+    COALESCE(country, 'Unknown') as country,
+    COALESCE(region, 'Unknown') as region,
     ROW_NUMBER() OVER (ORDER BY radius) AS radius_id
-  FROM ${ref("es-radius-staging")}
+  FROM deduplicated_radius
 )
 SELECT
   radius_id,

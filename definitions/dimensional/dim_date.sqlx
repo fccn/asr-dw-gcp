@@ -2,19 +2,25 @@ config {
   type: "table",
   name: "dim_date",
   schema: "data_warehouse",
-  description: "Date dimension.",
-  tags: ["eduroam", "rctsaai"]
+  description: "Date dimension from all log sources.",
+  tags: ["eduroam", "rctsaai", "ciencia-id"]
 }
-SELECT
+
+-- ES logs dates
+SELECT DISTINCT
   full_date,
-  day,
-  month,
-  year,
-  quarter,
-  week,
-  weekday
-FROM ${ref("es-date-staging")}
+  EXTRACT(DAY FROM full_date) AS day,
+  EXTRACT(MONTH FROM full_date) AS month,
+  EXTRACT(YEAR FROM full_date) AS year,
+  EXTRACT(QUARTER FROM full_date) AS quarter,
+  EXTRACT(WEEK FROM full_date) AS week,
+  EXTRACT(DAYOFWEEK FROM full_date) AS weekday
+FROM ${ref("fetched-es-logs")}
+WHERE full_date IS NOT NULL
+
 UNION DISTINCT
+
+-- InfluxDB dates  
 SELECT DISTINCT
   full_date,
   EXTRACT(DAY FROM full_date) AS day,
@@ -24,4 +30,18 @@ SELECT DISTINCT
   EXTRACT(WEEK FROM full_date) AS week,
   EXTRACT(DAYOFWEEK FROM full_date) AS weekday
 FROM ${ref("fetched-influx-logs")}
+WHERE full_date IS NOT NULL
+
+UNION DISTINCT
+
+-- CIÊNCIA-ID dates
+SELECT DISTINCT
+  full_date,
+  EXTRACT(DAY FROM full_date) AS day,
+  EXTRACT(MONTH FROM full_date) AS month,
+  EXTRACT(YEAR FROM full_date) AS year,
+  EXTRACT(QUARTER FROM full_date) AS quarter,
+  EXTRACT(WEEK FROM full_date) AS week,
+  EXTRACT(DAYOFWEEK FROM full_date) AS weekday
+FROM ${ref("fetched-ciencia-id-logs")}
 WHERE full_date IS NOT NULL

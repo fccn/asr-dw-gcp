@@ -2,7 +2,7 @@ config {
     type: "view",
     name: "fetched-webhook-rctsaai-sp",
     description: "RCTSAAI SPs from reliable webhook staging data.",
-    tags: ["webhook", "rctsaai", "sp"]
+    tags: ["webhook"]
 }
 SELECT
     org_codename as institution_codename,

@@ -2,56 +2,92 @@ config {
   type: "table",
   name: "dim_institution",
   schema: "data_warehouse",
-  description: "Institution dimension from webhook reference data.",
-  tags: ["eduroam"]
+  description: "Institution dimension from all services, updates on data change.",
+  bigquery: {
+    clusterBy: ["service_id"]
+  },
+  tags: ["webhook"]
 }
-WITH webhook_with_idp AS (
+
+WITH all_institutions AS (
+  -- Eduroam institutions
   SELECT
-    whi.codename,  -- Keep original codename from webhook
-    COALESCE(whi.description, 'Institution') AS description,
-    whi.realm,
-    COALESCE(whi.member, FALSE) AS member,
-    idp.idp_id
-  FROM ${ref("fetched-webhook-institutions")} whi
-  LEFT JOIN ${ref("dim_identityprovider")} idp 
-    ON whi.idp = idp.idp
-),
--- Add institutions from ES logs that aren't in webhook
-es_institutions AS (
-  SELECT
-    es.codename,
-    es.description,
-    es.realm,
-    es.member,
-    idp.idp_id
-  FROM ${ref("es-institutions-staging")} es
-  LEFT JOIN ${ref("dim_identityprovider")} idp 
-    ON es.idp_identifier = idp.idp
-  WHERE NOT EXISTS (
-    SELECT 1 FROM webhook_with_idp w 
-    WHERE w.realm = es.realm
-  )
-),
-all_institutions AS (
-  SELECT * FROM webhook_with_idp
+    CONCAT(codename, '_', '1') as institution_key,  -- Unique id across services
+    codename,
+    description,
+    realm,
+    member,
+    CAST(NULL AS STRING) as organization,
+    CAST(NULL AS DATE) as date_activated,
+    CAST(NULL AS DATE) as date_cancelled,
+    CASE WHEN status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    1 as service_id,
+    'eduroam' as service_name
+  FROM ${ref("fetched-webhook-eduroam")}
+  
   UNION ALL
-  SELECT * FROM es_institutions
+  
+  -- RCTSAAI institutions
+  SELECT DISTINCT
+    CONCAT(institution_codename, '_', '2') as institution_key,
+    institution_codename as codename,
+    institution_description as description,
+    institution_codename as realm,
+    CAST(NULL AS BOOLEAN) as member,
+    CAST(NULL AS STRING) as organization,
+    institution_date_activated as date_activated,
+    CAST(NULL AS DATE) as date_cancelled,
+    CASE WHEN institution_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    2 as service_id,
+    'rctsaai' as service_name
+  FROM ${ref("fetched-webhook-rctsaai-idp")}
+  WHERE institution_codename IS NOT NULL
+  
+  UNION ALL
+  
+  -- CIÊNCIA-ID institutions
+  SELECT DISTINCT
+    CONCAT(institution_codename, '_', '3') as institution_key,
+    institution_codename as codename,
+    institution_description as description,
+    institution_codename as realm,
+    CAST(NULL AS BOOLEAN) as member,
+    CAST(NULL AS STRING) as organization,
+    institution_date_activated as date_activated,
+    CAST(NULL AS DATE) as date_cancelled,
+    CASE WHEN institution_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
+    3 as service_id,
+    'ciencia_id' as service_name
+  FROM ${ref("fetched-webhook-cid-idp")}
+  WHERE institution_codename IS NOT NULL
 ),
 with_ids AS (
   SELECT
+    institution_key,
     codename,
     description,
-    realm, 
+    realm,
     member,
-    idp_id,
-    ROW_NUMBER() OVER (ORDER BY realm) AS institution_id
+    organization,
+    date_activated,
+    date_cancelled,
+    active,
+    service_id,
+    service_name,
+    ROW_NUMBER() OVER (ORDER BY institution_key) AS institution_id
   FROM all_institutions
 )
 SELECT
   institution_id,
+  institution_key,
   codename,
   description,
   realm,
   member,
-  idp_id
+  organization,
+  date_activated,
+  date_cancelled,
+  active,
+  service_id,
+  service_name
 FROM with_ids

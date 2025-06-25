@@ -2,7 +2,7 @@ config {
     type: "view",
     name: "fetched-webhook-cid-idp",
     description: "CIÊNCIA-ID IDPs from reliable webhook staging data.",
-    tags: ["webhook", "ciencia-id", "idp"]
+    tags: ["webhook"]
 }
 SELECT
     org_codename as institution_codename,

@@ -9,6 +9,28 @@ config {
   },
   tags: ["eduroam"]
 }
+
+WITH filtered_es_logs AS (
+  SELECT
+    full_date,
+    domain,
+    radius,
+    nas,
+    user_hash,
+    auth_status
+  FROM ${ref("fetched-es-logs")}
+  WHERE domain IS NOT NULL
+    AND auth_status = 'OK'
+),
+eduroam_institutions AS (
+  SELECT 
+    MIN(institution_id) as institution_id,  -- Take first match to avoid duplicates
+    realm
+  FROM ${ref("dim_institution")}
+  WHERE service_id = 1  -- Pre-filter institutions
+  GROUP BY realm  -- Deduplicate by realm
+)
+
 SELECT
   src.full_date,
   COALESCE(institution.institution_id, -1) AS institution_id,
@@ -17,8 +39,8 @@ SELECT
   src.user_hash,
   src.auth_status
   
-FROM ${ref("fetched-es-logs")} src
-LEFT JOIN ${ref("dim_institution")} institution 
+FROM filtered_es_logs src
+LEFT JOIN eduroam_institutions institution 
   ON src.domain = institution.realm
 LEFT JOIN ${ref("dim_radius")} radius_dim 
   ON src.radius = radius_dim.radius  

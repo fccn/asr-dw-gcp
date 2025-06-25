@@ -3,7 +3,7 @@ config {
   name: "dim_service",
   schema: "data_warehouse", 
   description: "Service dimension with predefined services.",
-  tags:["eduroam", "rctsaai"]
+  tags:["eduroam", "rctsaai", "cid"]
 }
 SELECT * FROM (
   SELECT 1 AS service_id, 'eduroam' AS name, 'eduroam' AS asr_service
