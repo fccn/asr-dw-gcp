@@ -19,8 +19,8 @@ WITH es_metrics AS (
     duh.institution_id,
     duh.radius_id,
     duh.nas_id,
-    CAST(-1 AS INT64) AS idp_id,  -- Eduroam doesn't have IDPs in logs
-    CAST(-1 AS INT64) AS sp_id,   -- Eduroam doesn't have SPs in logs
+    CAST(-1 AS INT64) AS idp_id,  -- Eduroam doesn't have IDPs
+    CAST(-1 AS INT64) AS sp_id,   -- Eduroam doesn't have SPs
     4 AS metric_id,
     COUNT(DISTINCT duh.user_hash) AS metric_value
   FROM ${ref("fact_es_distinct_user_hit")} duh
@@ -45,7 +45,7 @@ WITH es_metrics AS (
   GROUP BY 1,2,3,4,5,6,7,8
 ),
 
--- === RCTSAAI Metrics (pre-aggregated from InfluxDB) ===
+-- === RCTSAAI Metrics ===
 rctsaai_metrics AS (
   -- Metric 4: Distinct Hits
   SELECT
@@ -96,7 +96,7 @@ rctsaai_metrics AS (
   ${ when(incremental(), `WHERE f.full_date > (SELECT MAX(full_date) FROM ${self()})`) }
 ),
 
--- === CIÊNCIA-ID Metrics (pre-aggregated from API) ===
+-- === CIÊNCIA-ID Metrics ===
 ciencia_id_metrics AS (
   -- Metric 4: Distinct Hits
   SELECT

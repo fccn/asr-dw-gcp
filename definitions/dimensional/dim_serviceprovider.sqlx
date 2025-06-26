@@ -6,7 +6,7 @@ config {
   bigquery: {
     clusterBy: ["service_id"]
   },
-  tags: ["rctsaai", "cid"]
+  tags: ["webhook"]
 }
 
 WITH all_sps AS (

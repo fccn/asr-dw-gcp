@@ -3,7 +3,7 @@ config {
   name: "dim_date",
   schema: "data_warehouse",
   description: "Date dimension from all log sources.",
-  tags: ["eduroam", "rctsaai", "ciencia-id"]
+  tags: ["eduroam", "rctsaai", "cid"]
 }
 
 -- ES logs dates
