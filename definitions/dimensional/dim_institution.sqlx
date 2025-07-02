@@ -2,7 +2,7 @@ config {
   type: "table",
   name: "dim_institution",
   schema: "data_warehouse",
-  description: "Institution dimension from all services, updates on data change.",
+  description: "Institution dimension from all services (IDP and SP), updates on data change.",
   bigquery: {
     clusterBy: ["service_id"]
   },
@@ -27,7 +27,7 @@ WITH all_institutions AS (
   
   UNION ALL
   
-  -- RCTSAAI institutions
+  -- RCTSAAI institutions (from both IDP and SP)
   SELECT DISTINCT
     CONCAT(institution_codename, '_', '2') as institution_key,
     institution_codename as codename,
@@ -40,12 +40,26 @@ WITH all_institutions AS (
     CASE WHEN institution_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
     2 as service_id,
     'rctsaai' as service_name
-  FROM ${ref("fetched-webhook-rctsaai-idp")}
+  FROM (
+    SELECT 
+      institution_codename,
+      institution_description,
+      institution_status,
+      institution_date_activated
+    FROM ${ref("fetched-webhook-rctsaai-idp")}
+    UNION ALL
+    SELECT 
+      institution_codename,
+      institution_description,
+      institution_status,
+      institution_date_activated
+    FROM ${ref("fetched-webhook-rctsaai-sp")}
+  )
   WHERE institution_codename IS NOT NULL
   
   UNION ALL
   
-  -- CIÊNCIA-ID institutions
+  -- CIÊNCIA-ID institutions (from both IDP and SP)
   SELECT DISTINCT
     CONCAT(institution_codename, '_', '3') as institution_key,
     institution_codename as codename,
@@ -58,7 +72,21 @@ WITH all_institutions AS (
     CASE WHEN institution_status = 'Ativo' THEN TRUE ELSE FALSE END as active,
     3 as service_id,
     'ciencia_id' as service_name
-  FROM ${ref("fetched-webhook-cid-idp")}
+  FROM (
+    SELECT 
+      institution_codename,
+      institution_description,
+      institution_status,
+      institution_date_activated
+    FROM ${ref("fetched-webhook-cid-idp")}
+    UNION ALL
+    SELECT 
+      institution_codename,
+      institution_description,
+      institution_status,
+      institution_date_activated
+    FROM ${ref("fetched-webhook-cid-sp")}
+  )
   WHERE institution_codename IS NOT NULL
 ),
 with_ids AS (
